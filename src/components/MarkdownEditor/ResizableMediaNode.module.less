@@ -1,0 +1,107 @@
+.resizableNodeView {
+	margin: 12px 0;
+	user-select: none;
+	max-width: 100%;
+
+	// Fix for ProseMirror selection issues with node views
+	white-space: normal;
+}
+
+.mediaContainer {
+	position: relative;
+	line-height: 0;
+	max-width: 100%;
+
+	&.selected {
+		outline: 2px solid #1890ff;
+		border-radius: 4px;
+
+		.toolbar {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+}
+
+.media {
+	border-radius: 4px;
+	// max-width is handled in inline style to allow resizing
+}
+
+.resizeHandle {
+	position: absolute;
+	right: -6px;
+	bottom: -6px;
+	width: 12px;
+	height: 12px;
+	background-color: #1890ff;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	cursor: nwse-resize;
+	z-index: 10;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar {
+	position: absolute;
+	top: -40px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: 4px 8px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	z-index: 20;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s;
+
+	.actionBtn {
+		padding: 4px;
+		border-radius: 4px;
+		cursor: pointer;
+		color: #666;
+		box-sizing: content-box;
+		background: none;
+		border: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+
+		&:hover {
+			background-color: #f0f0f0;
+			color: #333;
+		}
+
+		&.active {
+			background-color: #e6f7ff;
+			color: #1890ff;
+		}
+	}
+
+	.deleteBtn {
+		font-size: 16px;
+		padding: 4px;
+		color: #ff4d4f;
+		cursor: pointer;
+		background: none;
+		border: none;
+		display: inline-flex;
+
+		&:hover {
+			color: #ff7875;
+			background-color: #fff1f0;
+			border-radius: 4px;
+		}
+	}
+}
+
+.divider {
+	width: 1px;
+	height: 14px;
+	background: #eee;
+	margin: 0 2px;
+}
