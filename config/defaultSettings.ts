@@ -1,7 +1,4 @@
 import type { ProLayoutProps } from '@ant-design/pro-components';
-
-const DEFAULT_LOGO_PATH = '/api/logo.svg';
-
 const defaultLayoutSettings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
@@ -13,7 +10,7 @@ const defaultLayoutSettings: ProLayoutProps & {
   "fixedHeader": true,
   "fixSiderbar": true,
   "pwa": true,
-  "logo": DEFAULT_LOGO_PATH,
+  "logo": "logo.svg",
   "token": {},
   "splitMenus": false,
   "menuHeaderRender": false,

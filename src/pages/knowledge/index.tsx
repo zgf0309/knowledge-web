@@ -18,6 +18,7 @@ import type { ImportFormValues } from './import/types';
 import type { KnowledgeFileRecord, TagFormValues } from './types';
 import { consumeImportedRecords, getConfigDrawerParserLabel, getConfigDrawerSourceLabel, getUniqueTags } from './utils';
 import './index.less';
+import { queryKnowledgeList } from '@/services/knowledge/api';
 
 const KnowledgePage = () => {
 	const navigate = useNavigate();
@@ -35,6 +36,21 @@ const KnowledgePage = () => {
 	const [messageApi, messageContextHolder] = message.useMessage();
 	const [modal, modalContextHolder] = Modal.useModal();
 
+const getKnowledgeList = async () => {
+	const res: any = await queryKnowledgeList({
+		tenant_id: '',
+		user_id: '',
+		knowledge_name: '',
+		knowledge_id: '',
+		scope: undefined,
+		sort_field: undefined,
+		sort_order: undefined,
+	});
+	console.log('====>', res);
+};
+useEffect(() => {
+	getKnowledgeList();
+}, []);
 	useEffect(() => {
 		const importedRecords = consumeImportedRecords();
 		if (!importedRecords.length) {

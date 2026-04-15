@@ -27,10 +27,15 @@ export default {
    */
   dev: {
     // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    '/knowledge-app/api/': {
+    '/knowledge-api/api/': {
       target: 'http://192.168.188.209:8000',
       changeOrigin: true,
       pathRewrite: { '^/knowledge-app/api': '/api' },
+    },
+    '/knowledge-api/ai/': {
+      target: 'http://192.168.188.209:8000',
+      changeOrigin: true,
+      pathRewrite: { '^/knowledge-api/ai': '/ai' },
     },
   },
   test: {

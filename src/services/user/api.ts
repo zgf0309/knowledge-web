@@ -9,7 +9,7 @@ export async function ssoLogin(
   },
   options?: { [key: string]: any },
 ) {
-  return request<any>('/knowledge-app/api/v1/auth/sso/login', {
+  return request<any>('/knowledge-api/api/v1/auth/sso/login', {
     method: 'GET',
     params: {
       ...params,
@@ -28,7 +28,7 @@ export async function ssoCallback(
   },
   options?: { [key: string]: any },
 ) {
-  return request<any>('/knowledge-app/api/v1/auth/sso/callback', {
+  return request<any>('/knowledge-api/api/v1/auth/sso/callback', {
     method: 'GET',
     params: {
       ...params,
@@ -38,7 +38,7 @@ export async function ssoCallback(
 }
 
 export async function outLogin(options?: { [key: string]: any }) {
-  return request<any>('/knowledge-app/api/v1/auth/sso/logout', {
+  return request<any>('/knowledge-api/api/v1/auth/sso/logout', {
     method: 'GET',
     ...(options || {}),
   });

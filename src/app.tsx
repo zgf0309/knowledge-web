@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import {StorageKeys, getLocalStorage, setLocalStorage  } from './utils/storage';
 import { ssoCallback } from '@/services/user/api';
 import { redirectToLogin, clearRedirectFlag } from './utils/redirectUrl';
-import { get } from 'lodash';
+console.log('defaultSettings in app.tsx=====>', defaultSettings);
 
 type MicroAppProps = {
   storagePrefix?: string;
@@ -63,6 +63,30 @@ const createLayoutToken = (colorPrimary: string) => {
   };
 };
 
+const resolveLayoutSettings = (
+  initialSettings?: Partial<LayoutSettings>,
+): RuntimeLayoutSettings => {
+  const currentSettings = (initialSettings ?? {}) as RuntimeLayoutSettings;
+  const defaults = defaultSettings as RuntimeLayoutSettings;
+
+  return {
+    ...defaults,
+    ...currentSettings,
+    token: {
+      ...(defaults.token ?? {}),
+      ...(currentSettings.token ?? {}),
+      header: {
+        ...(defaults.token?.header ?? {}),
+        ...(currentSettings.token?.header ?? {}),
+      },
+      sider: {
+        ...(defaults.token?.sider ?? {}),
+        ...(currentSettings.token?.sider ?? {}),
+      },
+    },
+  };
+};
+
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
  * */
@@ -91,6 +115,7 @@ export async function getInitialState(): Promise<{
   console.log('accessToken in getInitialState=====>', accessToken);
   if (accessToken) {
     const userInfo: any = getLocalStorage(StorageKeys.CURRENT_USER);
+    console.log('defaultSettings in getInitialState=====>', defaultSettings);
     return {
       currentUser: userInfo ? JSON.parse(userInfo) : undefined,
       settings: defaultSettings as Partial<LayoutSettings>,
@@ -143,7 +168,8 @@ export async function getInitialState(): Promise<{
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
-  const settings = (initialState?.settings ?? defaultSettings) as RuntimeLayoutSettings;
+  console.log('initialState-settings in layout=====>', initialState?.settings);
+  const settings = resolveLayoutSettings(initialState?.settings);
   const colorPrimary = String(settings.colorPrimary ?? fallbackPrimaryColor);
   const layoutToken = createLayoutToken(colorPrimary);
   const settingsToken = settings.token ?? {};
@@ -166,7 +192,10 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
           console.log('收到强制更新456', data?.userInfo);
           setInitialState((s) => ({
             ...s,
-            settings: data?.settings,
+            settings: {
+              ...(defaultSettings as Partial<LayoutSettings>),
+              ...(data?.settings ?? {}),
+            },
             currentUser: data?.userInfo,
           }));
         });
@@ -217,11 +246,14 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
             <SettingDrawer
               disableUrlParams
               enableDarkTheme
-              settings={initialState?.settings}
-              onSettingChange={(settings) => {
+              settings={settings}
+              onSettingChange={(nextSettings) => {
                 setInitialState((preInitialState) => ({
                   ...preInitialState,
-                  settings,
+                  settings: {
+                    ...(defaultSettings as Partial<LayoutSettings>),
+                    ...nextSettings,
+                  },
                 }));
               }}
             />
