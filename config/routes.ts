@@ -1,9 +1,4 @@
 export default [
-  {
-    path: '/user',
-    layout: false,
-    routes: [{ name: '登录', path: '/user/login', component: './user/login' }],
-  },
   { name: '首页', icon: 'HomeOutlined', path: '/knowledge-app', component: './Welcome' },
   { 
     name: '知识库管理',

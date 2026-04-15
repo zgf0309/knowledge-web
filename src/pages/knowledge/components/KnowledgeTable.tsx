@@ -15,7 +15,7 @@ interface KnowledgeTableProps {
 	onPageChange: (page: number, pageSize: number) => void;
 	onOpenDocument: (record: KnowledgeFileRecord) => void;
 	onOpenTagModal: (keys: string[], tags?: string[]) => void;
-	onOpenConfigModal: (keys: string[], parserConfig?: string) => void;
+	onOpenConfigModal: (record: KnowledgeFileRecord) => void;
 	onDelete: (keys: string[]) => void;
 }
 
@@ -142,13 +142,13 @@ const KnowledgeTable = ({
 			title: '操作',
 			key: 'actions',
 			fixed: 'right',
-      width: 124,
+      width: 160,
 			render: (_, record) => (
 				<Flex gap={10}>
 					<Button
 						type="link"
 						onClick={() => {
-							onOpenConfigModal([record.key], record.parserConfig);
+							onOpenConfigModal(record);
 						}}
 					>
 						修改配置

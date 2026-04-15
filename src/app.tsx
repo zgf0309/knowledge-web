@@ -1,5 +1,4 @@
 import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
-import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import '@ant-design/v5-patch-for-react-19';
@@ -8,11 +7,17 @@ import { history } from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import { useEffect } from 'react';
+import {StorageKeys, getLocalStorage, setLocalStorage  } from './utils/storage';
+import { ssoCallback } from '@/services/user/api';
+import { redirectToLogin, clearRedirectFlag } from './utils/redirectUrl';
+import { get } from 'lodash';
 
 type MicroAppProps = {
   storagePrefix?: string;
   subAppName?: string;
+  token?: string;
   settings?: any;
+  userInfo?: any;
 };
 type WujieWindow = Window & {
   $wujie?: {
@@ -65,34 +70,75 @@ export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
   currentUser?: API.CurrentUser;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchUserInfo?: (code: string, state: string) => Promise<API.CurrentUser | undefined>;
 }> {
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = async (code: string, state: string) => {
     try {
-      const msg = await queryCurrentUser({
-        skipErrorHandler: true,
-      });
-      return msg.data;
+      const res: any = await ssoCallback({ code, state });
+      console.log('res=====>', res);
+      if (res?.code === 200) {
+        window.history.replaceState({}, '', window.location.pathname);
+        return res?.data;
+      } else {
+        return undefined;
+      }
     } catch (_error) {
-      history.push(loginPath);
+      return undefined;
     }
-    return undefined;
+   
   };
- 
-  // 如果不是登录页面，执行
-  const { location } = history;
-  if (![loginPath, '/user/register', '/user/register-result'].includes(location.pathname)) {
-    const currentUser = await fetchUserInfo();
+  const accessToken = getLocalStorage(StorageKeys.ACCESS_TOKEN);
+  console.log('accessToken in getInitialState=====>', accessToken);
+  if (accessToken) {
+    const userInfo: any = getLocalStorage(StorageKeys.CURRENT_USER);
     return {
-      fetchUserInfo,
-      currentUser,
+      currentUser: userInfo ? JSON.parse(userInfo) : undefined,
       settings: defaultSettings as Partial<LayoutSettings>,
     };
+  } else {
+    const urlParams = new URLSearchParams(window.location.search);
+    const state = urlParams.get('state');
+    const code = urlParams.get('code');
+    if (code && state) {
+      // 登录成功回调，清除跳转锁
+      const userInfo: any = await fetchUserInfo(code, state);
+      if (userInfo) {
+        const currentUser = userInfo?.user_info;
+        setLocalStorage(StorageKeys.CURRENT_USER, userInfo?.user_info || '');
+        setLocalStorage(StorageKeys.ACCESS_TOKEN, userInfo?.access_token || '');
+        // 登录失败，清除跳转锁
+        clearRedirectFlag();
+        return {
+          fetchUserInfo,
+          currentUser,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      } else {
+        // 登录失败，清除跳转锁
+        clearRedirectFlag();
+        return {
+          fetchUserInfo,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      }
+    } else {
+       // 登录失败，清除跳转锁
+      clearRedirectFlag();
+      const user = getLocalStorage(StorageKeys.CURRENT_USER) || null;
+      if (user) {
+        return {
+          fetchUserInfo,
+          currentUser: user,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      } else {
+        return {
+          fetchUserInfo,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      }
+    }
   }
-  return {
-    fetchUserInfo,
-    settings: defaultSettings as Partial<LayoutSettings>,
-  };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
@@ -102,12 +148,20 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
   const layoutToken = createLayoutToken(colorPrimary);
   const settingsToken = settings.token ?? {};
   const currentWindow = getWindowObject();
+  const props = currentWindow?.$wujie?.props;
     useEffect(() => {
+    if (props?.token) {
+      setLocalStorage(StorageKeys.ACCESS_TOKEN, props.token);
+    }
+    if (props?.userInfo) {
+      setLocalStorage(StorageKeys.CURRENT_USER, JSON.stringify(props.userInfo));
+    }
     if (currentWindow?.$wujie) {
       const bus = currentWindow?.$wujie?.bus;
       if (bus) {
         // 接收更新指令
         bus.$on('force-sub-update', (data: any) => {
+          console.log('收到强制更新', data);
           console.log('收到强制更新123', data?.settings);
           console.log('收到强制更新456', data?.userInfo);
           setInitialState((s) => ({
@@ -118,7 +172,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         });
       }
     }
-  }, [currentWindow?.$wujie]);
+  }, [currentWindow?.$wujie, props?.token, props?.userInfo]);
   return {
     actionsRender: () => [<Question key="doc" />],
     avatarProps: {
@@ -133,11 +187,10 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
-      const { location } = history;
       console.log('onPageChange', initialState);
       // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
-        history.push(loginPath);
+      if (!initialState?.currentUser && !getLocalStorage(StorageKeys.ACCESS_TOKEN)) {
+        // redirectToLogin();
       }
     },
     bgLayoutImgList: [],
@@ -197,6 +250,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: RequestConfig = {
-  baseURL: 'https://proapi.azurewebsites.net',
+  baseURL: '', //'https://proapi.azurewebsites.net',
   ...errorConfig,
 };

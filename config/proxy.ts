@@ -27,23 +27,23 @@ export default {
    */
   dev: {
     // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    '/knowledgeapi/': {
-      target: 'https://proapi.azurewebsites.net',
+    '/knowledge-app/api/': {
+      target: 'http://192.168.188.209:8000',
       changeOrigin: true,
-      pathRewrite: { '^': '' },
+      pathRewrite: { '^/knowledge-app/api': '/api' },
     },
   },
   test: {
     // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    '/knowledgeapi/': {
-      target: 'https://proapi.azurewebsites.net',
+    '/api/': {
+      target: 'http://192.168.188.209:8000',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },
   },
   pre: {
-    '/knowledgeapi/': {
-      target: 'your pre url',
+    '/api/': {
+      target: 'http://192.168.188.209:8000',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

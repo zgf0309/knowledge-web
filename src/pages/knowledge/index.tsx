@@ -7,16 +7,16 @@ import { startTransition, useDeferredValue, useEffect, useState } from 'react';
 import {
 	INITIAL_RECORDS,
 	KNOWLEDGE_BASE,
-	PARSER_OPTIONS,
 	TAG_OPTIONS,
 } from './constants';
-import KnowledgeBatchConfigModal from './components/KnowledgeBatchConfigModal';
+import KnowledgeConfigDrawer from './components/KnowledgeConfigDrawer';
 import KnowledgeHeader from './components/KnowledgeHeader';
 import KnowledgeTable from './components/KnowledgeTable';
 import KnowledgeTagModal from './components/KnowledgeTagModal';
 import KnowledgeToolbar from './components/KnowledgeToolbar';
-import type { BatchConfigValues, KnowledgeFileRecord, TagFormValues } from './types';
-import { consumeImportedRecords, getUniqueTags } from './utils';
+import type { ImportFormValues } from './import/types';
+import type { KnowledgeFileRecord, TagFormValues } from './types';
+import { consumeImportedRecords, getConfigDrawerParserLabel, getConfigDrawerSourceLabel, getUniqueTags } from './utils';
 import './index.less';
 
 const KnowledgePage = () => {
@@ -26,12 +26,11 @@ const KnowledgePage = () => {
 	const [searchKeyword, setSearchKeyword] = useState('');
 	const deferredSearchKeyword = useDeferredValue(searchKeyword);
 	const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
-	const [configModalOpen, setConfigModalOpen] = useState(false);
-	const [configTargetKeys, setConfigTargetKeys] = useState<string[]>([]);
+	const [configDrawerRecord, setConfigDrawerRecord] = useState<KnowledgeFileRecord | null>(null);
 	const [tagModalOpen, setTagModalOpen] = useState(false);
 	const [tagTargetKeys, setTagTargetKeys] = useState<string[]>([]);
 	const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-	const [batchConfigForm] = Form.useForm<BatchConfigValues>();
+	const [configForm] = Form.useForm<ImportFormValues>();
 	const [tagForm] = Form.useForm<TagFormValues>();
 	const [messageApi, messageContextHolder] = message.useMessage();
 	const [modal, modalContextHolder] = Modal.useModal();
@@ -69,10 +68,9 @@ const KnowledgePage = () => {
 		currentPage * pagination.pageSize,
 	);
 
-	const closeConfigModal = () => {
-		setConfigModalOpen(false);
-		setConfigTargetKeys([]);
-		batchConfigForm.resetFields();
+	const closeConfigDrawer = () => {
+		setConfigDrawerRecord(null);
+		configForm.resetFields();
 	};
 
 	const closeTagModal = () => {
@@ -94,18 +92,8 @@ const KnowledgePage = () => {
 		}));
 	};
 
-	const openConfigModal = (keys: string[], parserConfig?: string) => {
-		if (!keys.length) {
-			messageApi.warning('请先选择要修改配置的文件');
-			return;
-		}
-
-		setConfigTargetKeys(keys);
-		batchConfigForm.setFieldsValue({
-			parserConfig:
-				parserConfig ?? records.find((record) => record.key === keys[0])?.parserConfig ?? PARSER_OPTIONS[0],
-		});
-		setConfigModalOpen(true);
+	const openConfigDrawer = (record: KnowledgeFileRecord) => {
+		setConfigDrawerRecord(record);
 	};
 
 	const openTagModal = (keys: string[], tags?: string[]) => {
@@ -164,22 +152,31 @@ const KnowledgePage = () => {
 		});
 	};
 
-	const handleSubmitBatchConfig = async () => {
-		const values = await batchConfigForm.validateFields();
+	const handleSubmitConfig = async (values: ImportFormValues) => {
+		if (!configDrawerRecord) {
+			return;
+		}
+
+		const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+		const parserConfig = getConfigDrawerParserLabel(values);
+		const sourceType = getConfigDrawerSourceLabel(values.sourceType);
+		const tags = values.autoTagging ? (values.selectedTags ?? []) : [];
 		setRecords((currentRecords) =>
 			currentRecords.map((record) =>
-				configTargetKeys.includes(record.key)
+				record.key === configDrawerRecord.key
 					? {
-							...record,
-							parserConfig: values.parserConfig,
-							updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-						}
+						...record,
+						parserConfig,
+						sourceType,
+						tags,
+						updatedAt: now,
+					}
 					: record,
 			),
 		);
-		setKnowledgeUpdatedAt(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-		closeConfigModal();
-		messageApi.success('解析配置已更新');
+		setKnowledgeUpdatedAt(now);
+		closeConfigDrawer();
+		messageApi.success('配置已更新');
 	};
 
 	const handleSubmitTags = async () => {
@@ -220,7 +217,20 @@ const KnowledgePage = () => {
 						searchKeyword={searchKeyword}
 						onSearchChange={handleSearchChange}
 						onRefresh={handleRefresh}
-						onOpenBatchConfig={() => openConfigModal(selectedRowKeys.map(String))}
+						onOpenBatchConfig={() => {
+							if (selectedRowKeys.length !== 1) {
+								messageApi.warning('请先选择一个文件后再修改配置');
+								return;
+							}
+
+							const targetRecord = records.find((record) => record.key === String(selectedRowKeys[0]));
+							if (!targetRecord) {
+								messageApi.warning('未找到要修改配置的文件');
+								return;
+							}
+
+							openConfigDrawer(targetRecord);
+						}}
 						onDeleteSelected={() => handleDelete(selectedRowKeys.map(String))}
 						onOpenTagModal={() => openTagModal(selectedRowKeys.map(String))}
 					/>
@@ -236,18 +246,16 @@ const KnowledgePage = () => {
 						}}
 						onOpenDocument={handleOpenDocument}
 						onOpenTagModal={openTagModal}
-						onOpenConfigModal={openConfigModal}
+						onOpenConfigModal={openConfigDrawer}
 						onDelete={handleDelete}
 					/>
 				</Flex>
 			</Flex>
-			<KnowledgeBatchConfigModal
-				open={configModalOpen}
-				targetCount={configTargetKeys.length}
-				form={batchConfigForm}
-				parserOptions={PARSER_OPTIONS}
-				onCancel={closeConfigModal}
-				onSubmit={handleSubmitBatchConfig}
+			<KnowledgeConfigDrawer
+				open={Boolean(configDrawerRecord)}
+				record={configDrawerRecord}
+				onCancel={closeConfigDrawer}
+				onSubmit={handleSubmitConfig}
 			/>
 			<KnowledgeTagModal
 				open={tagModalOpen}

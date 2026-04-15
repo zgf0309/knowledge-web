@@ -26,7 +26,6 @@ const getChildLayoutSettings = () => {
   }
 
   const storedSettings = window.localStorage.getItem('childLayoutSettings');
-  console.log('storedSettings', storedSettings);
   if (!storedSettings) {
     return undefined;
   }
