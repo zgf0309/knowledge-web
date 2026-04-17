@@ -1,40 +1,26 @@
 import type {
 	KnowledgeBaseRecord,
 	KnowledgeBatchMoveState,
-	KnowledgeEditorState,
 	KnowledgeGroup,
-	KnowledgePageState,
 } from './types';
 
-export const DEFAULT_GROUPS: KnowledgeGroup[] = [
-	{
-		key: 'all',
-		title: '全部群组',
-		children: [
-			{ key: 'group-1', title: '测试1', children: [{ key: 'group-1-1', title: '1234' }] },
-			{ key: 'group-2', title: '测试' },
-		],
-	},
-];
+export const DEFAULT_GROUPS: KnowledgeGroup[] = [];
 
 export const INITIAL_RECORDS: KnowledgeBaseRecord[] = [
 	{
-		key: 'kb-1',
-		name: '测试知识库',
-		id: '241b5eb7-c108-474d-bf1d-cd76f0f812a1',
-		description: '陈述：一句话描述，简要说明知识库用途',
-		documentCount: 1,
-		advancedUsage: null,
-		sourceType: '共享资源',
-		embeddingModel: 'multilingual-embedding',
-		clusterName: '-',
-		updatedAt: '2026-04-09 14:44:47',
-		createdAt: '2026-03-31 11:22:58',
-		groupKey: 'group-2',
+		group_id: 'all',
+		knowledge_name: '测试知识库',
+		knowledge_id: '241b5eb7-c108-474d-bf1d-cd76f0f812a1',
+		knowledge_desc: '陈述：一句话描述，简要说明知识库用途',
+		language: 'zh-CN',
+		scope: 0,
+		status: 'ready',
+		tenant_id: 'mock-tenant',
+		create_date: '2026-03-31',
+		create_time: '11:22:58',
 	},
 ];
 
-export const SOURCE_OPTIONS = ['共享资源', '专属资源'];
 export const EMBEDDING_MODEL_PRESETS = [
 	{
 		value: 'multilingual-embedding',
@@ -61,18 +47,6 @@ export const EMBEDDING_MODEL_PRESETS = [
 		badges: ['向量表示'],
 	},
 ] as const;
-
-export const EMBEDDING_MODEL_OPTIONS = EMBEDDING_MODEL_PRESETS.map((item) => item.value);
-
-export const INITIAL_PAGE_STATE: KnowledgePageState = {
-	current: 1,
-	pageSize: 10,
-};
-
-export const INITIAL_EDITOR_STATE: KnowledgeEditorState = {
-	open: false,
-	mode: 'create',
-};
 
 export const INITIAL_BATCH_MOVE_STATE: KnowledgeBatchMoveState = {
 	open: false,

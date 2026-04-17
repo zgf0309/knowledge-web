@@ -19,6 +19,7 @@ import type { KnowledgeFileRecord, TagFormValues } from './types';
 import { consumeImportedRecords, getConfigDrawerParserLabel, getConfigDrawerSourceLabel, getUniqueTags } from './utils';
 import './index.less';
 import { queryKnowledgeList } from '@/services/knowledge/api';
+import {StorageKeys, getLocalStorage } from '@/utils/storage';
 
 const KnowledgePage = () => {
 	const navigate = useNavigate();
@@ -36,9 +37,11 @@ const KnowledgePage = () => {
 	const [messageApi, messageContextHolder] = message.useMessage();
 	const [modal, modalContextHolder] = Modal.useModal();
 
+
 const getKnowledgeList = async () => {
+	const userInfo:any = getLocalStorage(StorageKeys.CURRENT_USER);
 	const res: any = await queryKnowledgeList({
-		tenant_id: '',
+		tenant_id: userInfo?.tenant_id || '',
 		user_id: '',
 		knowledge_name: '',
 		knowledge_id: '',

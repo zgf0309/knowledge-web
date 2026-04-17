@@ -1,6 +1,96 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from '@/utils/enhancedRequest';
+
+
+export async function queryKnowledgeGroup(
+  params: {
+    // query
+    /** tenant_id */
+    tenant_id?: string;
+    /** name */
+    name?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+export async function addKnowledgeTree(
+  params: {
+    // query
+    /** name */
+    name?: string;
+    /** description */
+    description?: string;
+    /** parent_id */
+    parent_id?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
+    method: 'POST',
+    data: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+export async function updateKnowledgeTree(
+  params: {
+    // query
+    /** group_id */
+    group_id?: string;
+    /** name */
+    name?: string;
+    /** description */
+    description?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
+    method: 'PUT',
+    data: {
+      ...params,
+    },
+    ...(options || {}),
+  }); 
+}
+
+export async function getKnowledgeGroupInfo(
+  params: {
+    // query
+    /** group_id */
+    group_id?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>(`/knowledge-api/api/v1/ai/knowledge/group/${params.group_id}`, {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
+export async function delKnowledgeTree(
+  params: {
+    // query
+    /** group_id */
+    group_id?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>(`/knowledge-api/api/v1/ai/knowledge/group/${params.group_id}`, {
+    method: 'DELETE',
+    ...(options || {}),
+  });
+}
+
 export async function queryKnowledgeList(
   params: {
     // query
@@ -8,6 +98,8 @@ export async function queryKnowledgeList(
     tenant_id?: string;
     /** knowledge_name */
     knowledge_name?: string;
+    /** group_id */
+    group_id?: string;
     /** user_id */
 		user_id?: string;
     /** knowledge_id */
@@ -18,10 +110,14 @@ export async function queryKnowledgeList(
 		sort_field?: string;
     /** sort_order */
 		sort_order?: string;
+    /** page_num */
+		page_num?: number;
+    /** page_size */
+		page_size?: number;
   },
   options?: { [key: string]: any },
 ) {
-  return request<any>('/knowledge-api/ai/knowledge', {
+  return request<any>('/knowledge-api/api/v1/ai/knowledge', {
     method: 'GET',
     params: {
       ...params,

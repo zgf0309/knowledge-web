@@ -7,32 +7,20 @@ import {
 } from '@ant-design/icons';
 import { Button, Dropdown, Flex, Input, Tree } from 'antd';
 import type { Key } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { TreeDataNode } from 'antd';
 import type { KnowledgeGroup } from '../types';
+import Loading from './Loading';
 
 interface KnowledgeGroupTreeProps {
+	isLoading?: boolean;
 	groups: KnowledgeGroup[];
 	selectedGroupKey: string;
 	expandedKeys: Key[];
-	groupCountMap: Map<string, number>;
-	hoveredGroupKey?: string;
-	openedMenuGroupKey?: string;
-	pendingChildParentKey?: string;
-	pendingChildTitle: string;
-	editingGroupKey?: string;
-	editingGroupTitle: string;
+	onSearchGroup: (keyword: string) => void;
 	onExpandedKeysChange: (keys: Key[]) => void;
 	onSelectGroup: (groupKey: string) => void;
-	onHoveredGroupKeyChange: (groupKey?: string) => void;
-	onOpenedMenuGroupKeyChange: (groupKey?: string) => void;
-	onPendingChildTitleChange: (title: string) => void;
-	onEditingGroupTitleChange: (title: string) => void;
-	onCommitPendingChild: () => void;
-	onClearPendingChild: () => void;
 	onAddChild: (parentKey: string) => void;
-	onCommitEditingGroup: () => void;
-	onClearEditingGroup: () => void;
 	onStartEditGroup: (group: KnowledgeGroup) => void;
 	onCopyGroupPath: (groupKey: string) => void;
 	onDeleteGroup: (group: KnowledgeGroup) => void;
@@ -40,83 +28,65 @@ interface KnowledgeGroupTreeProps {
 
 const KnowledgeGroupTree = ({
 	groups,
+	isLoading = false,
 	selectedGroupKey,
 	expandedKeys,
-	groupCountMap,
-	hoveredGroupKey,
-	openedMenuGroupKey,
-	pendingChildParentKey,
-	pendingChildTitle,
-	editingGroupKey,
-	editingGroupTitle,
+	onSearchGroup,
 	onExpandedKeysChange,
 	onSelectGroup,
-	onHoveredGroupKeyChange,
-	onOpenedMenuGroupKeyChange,
-	onPendingChildTitleChange,
-	onEditingGroupTitleChange,
-	onCommitPendingChild,
-	onClearPendingChild,
 	onAddChild,
-	onCommitEditingGroup,
-	onClearEditingGroup,
 	onStartEditGroup,
 	onCopyGroupPath,
 	onDeleteGroup,
 }: KnowledgeGroupTreeProps) => {
+	const [searching, setSearching] = useState(false);
+	const [searchKeyword, setSearchKeyword] = useState('');
+	const [hoveredGroupKey, setHoveredGroupKey] = useState<string>();
+	const [openedMenuGroupKey, setOpenedMenuGroupKey] = useState<string>();
+
+	const submitSearch = (keyword: string, closeSearch = true) => {
+		onSearchGroup(keyword.trim());
+		if (closeSearch) {
+			setSearching(false);
+		}
+	};
+
 	const treeData = useMemo<TreeDataNode[]>(() => {
 		const convert = (items: KnowledgeGroup[], level = 0): TreeDataNode[] =>
 			items.map((group) => ({
-				key: group.key,
+				key: String(group.group_id ?? ''),
 				title: (
 					<Flex
 						align="center"
 						justify="space-between"
 						gap={8}
-						onMouseEnter={() => onHoveredGroupKeyChange(group.key)}
-						onMouseLeave={() => onHoveredGroupKeyChange(undefined)}
+						onMouseEnter={() => setHoveredGroupKey(String(group.group_id ?? ''))}
+						onMouseLeave={() => setHoveredGroupKey(undefined)}
 						className={
-							selectedGroupKey === group.key
+							selectedGroupKey === String(group.group_id ?? '')
 								? 'knowledge-base-list__tree-node knowledge-base-list__tree-node--selected'
 								: 'knowledge-base-list__tree-node'
 						}
 					>
 						<Flex align="center" gap={8} className="knowledge-base-list__tree-main">
 							<FolderOpenFilled className="knowledge-base-list__tree-icon" />
-							{editingGroupKey === group.key ? (
-								<Input
-									autoFocus
-									size="small"
-									value={editingGroupTitle}
-									className="knowledge-base-list__tree-input"
-									onChange={(event) => onEditingGroupTitleChange(event.target.value)}
-									onBlur={onCommitEditingGroup}
-									onPressEnter={onCommitEditingGroup}
-									onKeyDown={(event) => {
-										if (event.key === 'Escape') {
-											onClearEditingGroup();
-										}
-									}}
-									onClick={(event) => event.stopPropagation()}
-								/>
-							) : (
-								<span
-									className={
-										level === 0
-											? 'knowledge-base-list__tree-title knowledge-base-list__tree-title--root'
-											: 'knowledge-base-list__tree-title'
-									}
-								>
-									{group.title}
-								</span>
-							)}
+							<span
+								className={
+									level === 0
+										? 'knowledge-base-list__tree-title knowledge-base-list__tree-title--root'
+										: 'knowledge-base-list__tree-title'
+								}
+							>
+								{group.name}
+							</span>
 						</Flex>
 						<Flex align="center" gap={4} className="knowledge-base-list__tree-side">
 							<Flex
 								align="center"
 								gap={2}
 								className={
-									hoveredGroupKey === group.key || openedMenuGroupKey === group.key
+									hoveredGroupKey === String(group.group_id ?? '') ||
+									openedMenuGroupKey === String(group.group_id ?? '')
 										? 'knowledge-base-list__tree-actions knowledge-base-list__tree-actions--visible'
 										: 'knowledge-base-list__tree-actions'
 								}
@@ -127,7 +97,7 @@ const KnowledgeGroupTree = ({
 									className="knowledge-base-list__tree-action-button"
 									onClick={(event) => {
 										event.stopPropagation();
-										onAddChild(group.key);
+										onAddChild(String(group.group_id ?? ''));
 									}}
 								/>
 								<Dropdown
@@ -135,13 +105,13 @@ const KnowledgeGroupTree = ({
 									placement="bottomLeft"
 									overlayClassName="knowledge-base-list__tree-dropdown"
 									onOpenChange={(open) => {
-										onOpenedMenuGroupKeyChange(open ? group.key : undefined);
+										setOpenedMenuGroupKey(open ? String(group.group_id ?? '') : undefined);
 									}}
 									menu={{
 										items: [
-											{ key: 'edit', label: '编辑' },
+											...(group.group_id === 'all' ? [] : [{ key: 'edit', label: '编辑' }]),
 											{ key: 'copy-path', label: '复制路径' },
-											{ key: 'delete', label: '删除', danger: group.key !== 'all' },
+											...(group.group_id === 'all' ? [] : [{ key: 'delete', label: '删除', danger: true }]),
 										],
 										onClick: ({ key, domEvent }) => {
 											domEvent.stopPropagation();
@@ -150,7 +120,7 @@ const KnowledgeGroupTree = ({
 												return;
 											}
 											if (key === 'copy-path') {
-												onCopyGroupPath(group.key);
+												onCopyGroupPath(String(group.group_id ?? ''));
 												return;
 											}
 											if (key === 'delete') {
@@ -169,86 +139,92 @@ const KnowledgeGroupTree = ({
 							</Flex>
 							<span
 								className={
-									selectedGroupKey === group.key
+									selectedGroupKey === String(group.group_id ?? '')
 										? 'knowledge-base-list__tree-count knowledge-base-list__tree-count--selected'
 										: 'knowledge-base-list__tree-count'
 								}
 							>
-								{groupCountMap.get(group.key) ?? 0}
+								{group?.kb_count ?? 0}
 							</span>
 						</Flex>
 					</Flex>
 				),
-				children: (() => {
-					const children = group.children ? convert(group.children, level + 1) : [];
-
-					if (pendingChildParentKey === group.key) {
-						children.push({
-							key: `${group.key}-pending-child`,
-							selectable: false,
-							title: (
-								<Flex align="center" gap={8} className="knowledge-base-list__tree-input-row">
-									<FolderOpenFilled className="knowledge-base-list__tree-icon" />
-									<Input
-										autoFocus
-										size="small"
-										placeholder="请输入"
-										value={pendingChildTitle}
-										className="knowledge-base-list__tree-input"
-										onChange={(event) => onPendingChildTitleChange(event.target.value)}
-										onBlur={onCommitPendingChild}
-										onPressEnter={onCommitPendingChild}
-										onKeyDown={(event) => {
-											if (event.key === 'Escape') {
-												onClearPendingChild();
-											}
-										}}
-										onClick={(event) => event.stopPropagation()}
-									/>
-								</Flex>
-							),
-						});
-					}
-
-					return children;
-				})(),
+				children: group.children ? convert(group.children, level + 1) : undefined,
 			}));
 
 		return convert(groups);
 	}, [
-		editingGroupKey,
-		editingGroupTitle,
-		groupCountMap,
 		groups,
 		hoveredGroupKey,
 		onAddChild,
-		onClearEditingGroup,
-		onClearPendingChild,
-		onCommitEditingGroup,
-		onCommitPendingChild,
 		onCopyGroupPath,
 		onDeleteGroup,
-		onEditingGroupTitleChange,
-		onHoveredGroupKeyChange,
-		onOpenedMenuGroupKeyChange,
-		onPendingChildTitleChange,
 		onStartEditGroup,
 		openedMenuGroupKey,
-		pendingChildParentKey,
-		pendingChildTitle,
 		selectedGroupKey,
 	]);
 
 	return (
 		<div className="knowledge-base-list__sidebar">
-			<Flex align="center" justify="space-between" className="knowledge-base-list__sidebar-title-row">
-				<div className="knowledge-base-list__sidebar-title">知识库群组</div>
-				<Button
-					type="text"
-					className="knowledge-base-list__sidebar-title-action"
-					icon={<SearchOutlined />}
-				/>
-			</Flex>
+			{searching ? (
+				<div className="knowledge-base-list__sidebar-search-row">
+					<Input
+						autoFocus
+						allowClear
+						placeholder="请输入群组名称搜索"
+						className="knowledge-base-list__sidebar-search"
+						prefix={
+							<span
+								style={{ cursor: 'pointer' }}
+								onMouseDown={(event) => event.preventDefault()}
+								onClick={() => submitSearch(searchKeyword, false)}
+							>
+								<SearchOutlined className="knowledge-base-list__sidebar-search-icon" />
+							</span>
+						}
+						value={searchKeyword}
+						onChange={(event) => {
+							const nextKeyword = event.target.value;
+							setSearchKeyword(nextKeyword);
+							if (!nextKeyword) {
+								onSearchGroup('');
+							}
+						}}
+						onBlur={() => {
+							if (!searchKeyword.trim()) {
+								setSearching(false);
+							}
+						}}
+						onPressEnter={() => submitSearch(searchKeyword)}
+						onKeyDown={(event) => {
+							if (event.key === 'Escape') {
+								onSearchGroup('');
+								setSearchKeyword('');
+								setSearching(false);
+							}
+						}}
+					/>
+				</div>
+			) : (
+				<Flex align="center" justify="space-between" className="knowledge-base-list__sidebar-title-row">
+					<div className="knowledge-base-list__sidebar-title">知识库群组</div>
+					<Button
+						type="text"
+						className="knowledge-base-list__sidebar-title-action"
+						icon={<SearchOutlined />}
+						onClick={() => setSearching(true)}
+					/>
+				</Flex>
+			)}
+			{isLoading ? (
+				<Flex
+					align="center"
+					justify="center"
+					style={{width: '100%', height: '200px'}}
+				> 
+					<Loading />
+				</Flex>	
+			) : (
 			<Tree
 				blockNode
 				switcherIcon={<CaretDownFilled className="knowledge-base-list__tree-switcher-icon" />}
@@ -259,7 +235,7 @@ const KnowledgeGroupTree = ({
 				onSelect={(keys) => {
 					onSelectGroup(String(keys[0] ?? 'all'));
 				}}
-			/>
+			/>)}
 		</div>
 	);
 };

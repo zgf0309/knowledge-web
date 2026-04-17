@@ -1,11 +1,91 @@
-import type { KnowledgeBaseRecord, KnowledgeFormValues, KnowledgeGroup } from './types';
+import type { KnowledgeBaseRecord, KnowledgeGroup } from './types';
+
+export const buildGroupTree = (flatGroups: KnowledgeGroup[]): KnowledgeGroup[] => {
+	if (!flatGroups.length) {
+		return [];
+	}
+
+	const nodeMap = new Map<string, KnowledgeGroup>();
+	flatGroups.forEach((group) => {
+		if (!group.group_id) {
+			return;
+		}
+		nodeMap.set(group.group_id, { ...group, children: [] });
+	});
+
+	const roots: KnowledgeGroup[] = [];
+	nodeMap.forEach((node) => {
+		const parentId = node.parent_id || 'all';
+		if (parentId && nodeMap.has(parentId)) {
+			nodeMap.get(parentId)?.children?.push(node);
+			return;
+		}
+		if (node.parent_id !== parentId) {
+			node.parent_id = parentId;
+		}
+		roots.push(node);
+	});
+
+	const normalizeChildren = (items: KnowledgeGroup[]): KnowledgeGroup[] =>
+		items.map((item) => ({
+			...item,
+			children: item.children?.length ? normalizeChildren(item.children) : undefined,
+		}));
+
+	return normalizeChildren(roots);
+};
+
+export const ensureRootGroup = (groups: KnowledgeGroup[]): KnowledgeGroup[] => {
+	const sumDescendantKbCount = (items: KnowledgeGroup[]): number =>
+		items.reduce((total, item) => {
+			const currentCount = Number(item.kb_count ?? 0);
+			const childCount = item.children?.length ? sumDescendantKbCount(item.children) : 0;
+			return total + currentCount + childCount;
+		}, 0);
+
+	if (!groups.length) {
+		return [
+			{
+				group_id: 'all',
+				name: '全部群组',
+				description: '全部群组',
+				parent_id: null,
+				kb_count: 0,
+			},
+		];
+	}
+
+	if (groups.some((group) => group.group_id === 'all')) {
+		return groups.map((group) =>
+			group.group_id === 'all'
+				? {
+					...group,
+					kb_count: sumDescendantKbCount(group.children ?? []),
+				}
+				: group,
+		);
+	}
+
+	return [
+		{
+			group_id: 'all',
+			name: '全部群组',
+			description: '全部群组',
+			parent_id: null,
+			kb_count: sumDescendantKbCount(groups),
+			children: groups,
+		},
+	];
+};
 
 export const collectGroupKeys = (groups: KnowledgeGroup[]): string[] => {
 	const keys: string[] = [];
 
 	const traverse = (items: KnowledgeGroup[]) => {
 		items.forEach((item) => {
-			keys.push(item.key);
+			if (item.group_id) {
+				keys.push(item.group_id);
+			}
 			if (item.children?.length) {
 				traverse(item.children);
 			}
@@ -17,60 +97,14 @@ export const collectGroupKeys = (groups: KnowledgeGroup[]): string[] => {
 	return keys;
 };
 
-export const appendChildGroup = (
-	groups: KnowledgeGroup[],
-	parentKey: string,
-	child: KnowledgeGroup,
-): KnowledgeGroup[] =>
-	groups.map((group) => {
-		if (group.key === parentKey) {
-			return {
-				...group,
-				children: [...(group.children ?? []), child],
-			};
-		}
-
-		if (!group.children?.length) {
-			return group;
-		}
-
-		return {
-			...group,
-			children: appendChildGroup(group.children, parentKey, child),
-		};
-	});
-
-export const updateGroupTitle = (
-	groups: KnowledgeGroup[],
-	targetKey: string,
-	nextTitle: string,
-): KnowledgeGroup[] =>
-	groups.map((group) => {
-		if (group.key === targetKey) {
-			return {
-				...group,
-				title: nextTitle,
-			};
-		}
-
-		if (!group.children?.length) {
-			return group;
-		}
-
-		return {
-			...group,
-			children: updateGroupTitle(group.children, targetKey, nextTitle),
-		};
-	});
-
 export const findGroupPathTitles = (
 	groups: KnowledgeGroup[],
 	targetKey: string,
 	parentTitles: string[] = [],
 ): string[] | undefined => {
 	for (const group of groups) {
-		const nextPath = [...parentTitles, group.title];
-		if (group.key === targetKey) {
+		const nextPath = [...parentTitles, group.name];
+		if (group.group_id === targetKey) {
 			return nextPath;
 		}
 
@@ -85,51 +119,14 @@ export const findGroupPathTitles = (
 	return undefined;
 };
 
-export const collectBranchKeys = (groups: KnowledgeGroup[], targetKey: string): string[] => {
-	for (const group of groups) {
-		if (group.key === targetKey) {
-			const branchKeys: string[] = [];
-			const traverse = (items: KnowledgeGroup[]) => {
-				items.forEach((item) => {
-					branchKeys.push(item.key);
-					if (item.children?.length) {
-						traverse(item.children);
-					}
-				});
-			};
-
-			traverse([group]);
-			return branchKeys;
-		}
-
-		if (group.children?.length) {
-			const childBranchKeys = collectBranchKeys(group.children, targetKey);
-			if (childBranchKeys.length) {
-				return childBranchKeys;
-			}
-		}
-	}
-
-	return [];
-};
-
-export const removeGroupByKey = (
-	groups: KnowledgeGroup[],
-	targetKey: string,
-): KnowledgeGroup[] =>
-	groups
-		.filter((group) => group.key !== targetKey)
-		.map((group) => ({
-			...group,
-			children: group.children ? removeGroupByKey(group.children, targetKey) : undefined,
-		}));
-
 export const getGroupTitleMap = (groups: KnowledgeGroup[]) => {
 	const entries: Array<[string, string]> = [];
 
 	const traverse = (items: KnowledgeGroup[]) => {
 		items.forEach((item) => {
-			entries.push([item.key, item.title]);
+			if (item.group_id) {
+				entries.push([item.group_id, item.name]);
+			}
 			if (item.children?.length) {
 				traverse(item.children);
 			}
@@ -141,11 +138,13 @@ export const getGroupTitleMap = (groups: KnowledgeGroup[]) => {
 	return new Map(entries);
 };
 
+// 分组统计
 export const getGroupCounts = (groups: KnowledgeGroup[], records: KnowledgeBaseRecord[]) => {
 	const countMap = new Map<string, number>();
 
 	records.forEach((record) => {
-		countMap.set(record.groupKey, (countMap.get(record.groupKey) ?? 0) + 1);
+		const groupId = String(record.group_id ?? 'all');
+		countMap.set(groupId, (countMap.get(groupId) ?? 0) + 1);
 	});
 
 	const fillParentCount = (items: KnowledgeGroup[]) => {
@@ -156,10 +155,12 @@ export const getGroupCounts = (groups: KnowledgeGroup[], records: KnowledgeBaseR
 
 			fillParentCount(item.children);
 			const childCount = item.children.reduce(
-				(total, child) => total + (countMap.get(child.key) ?? 0),
+				(total, child) => total + (countMap.get(String(child.group_id)) ?? 0),
 				0,
 			);
-			countMap.set(item.key, childCount);
+			if (item.group_id) {
+				countMap.set(item.group_id, childCount);
+			}
 		});
 	};
 
@@ -167,30 +168,6 @@ export const getGroupCounts = (groups: KnowledgeGroup[], records: KnowledgeBaseR
 	countMap.set('all', records.length);
 
 	return countMap;
-};
-
-export const filterGroups = (groups: KnowledgeGroup[], keyword: string): KnowledgeGroup[] => {
-	const normalizedKeyword = keyword.trim().toLowerCase();
-	if (!normalizedKeyword) {
-		return groups;
-	}
-
-	return groups
-		.map((group) => {
-			const matchedChildren = group.children?.filter((child) =>
-				child.title.toLowerCase().includes(normalizedKeyword),
-			);
-
-			if (group.title.toLowerCase().includes(normalizedKeyword) || matchedChildren?.length) {
-				return {
-					...group,
-					children: matchedChildren,
-				};
-			}
-
-			return null;
-		})
-		.filter(Boolean) as KnowledgeGroup[];
 };
 
 export const filterGroupTree = (groups: KnowledgeGroup[], keyword: string): KnowledgeGroup[] => {
@@ -202,7 +179,7 @@ export const filterGroupTree = (groups: KnowledgeGroup[], keyword: string): Know
 	return groups
 		.map((group) => {
 			const matchedChildren = group.children ? filterGroupTree(group.children, keyword) : undefined;
-			const currentMatched = group.title.toLowerCase().includes(normalizedKeyword);
+			const currentMatched = group.name.toLowerCase().includes(normalizedKeyword);
 
 			if (currentMatched || matchedChildren?.length) {
 				return {
@@ -216,115 +193,3 @@ export const filterGroupTree = (groups: KnowledgeGroup[], keyword: string): Know
 		.filter(Boolean) as KnowledgeGroup[];
 };
 
-export const filterRecords = (
-	records: KnowledgeBaseRecord[],
-	selectedGroupKey: string,
-	keyword: string,
-) => {
-	const normalizedKeyword = keyword.trim().toLowerCase();
-
-	return records.filter((record) => {
-		const groupMatched = selectedGroupKey === 'all' || record.groupKey === selectedGroupKey;
-		if (!groupMatched) {
-			return false;
-		}
-
-		if (!normalizedKeyword) {
-			return true;
-		}
-
-		return [record.name, record.id, record.description].some((value) =>
-			value.toLowerCase().includes(normalizedKeyword),
-		);
-	});
-};
-
-export const paginateRecords = (
-	records: KnowledgeBaseRecord[],
-	current: number,
-	pageSize: number,
-) => {
-	const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
-	const safeCurrent = Math.min(current, totalPages);
-
-	return {
-		totalPages,
-		currentPage: safeCurrent,
-		pagedRecords: records.slice((safeCurrent - 1) * pageSize, safeCurrent * pageSize),
-	};
-};
-
-export const buildGroupOptions = (groups: KnowledgeGroup[]) => {
-	const options: Array<{ label: string; value: string }> = [];
-
-	const traverse = (items: KnowledgeGroup[], parentTitles: string[] = []) => {
-		items.forEach((item) => {
-			const pathTitles = [...parentTitles, item.title];
-			if (item.key !== 'all') {
-				options.push({
-					label: pathTitles.join(' / '),
-					value: item.key,
-				});
-			}
-			if (item.children?.length) {
-				traverse(item.children, pathTitles);
-			}
-		});
-	};
-
-	traverse(groups);
-
-	return options;
-};
-
-export const createKnowledgeRecord = (
-	values: KnowledgeFormValues,
-	now: string,
-): KnowledgeBaseRecord => ({
-	key: `kb-${Date.now()}`,
-	name: values.name,
-	id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`,
-	description: values.description?.trim() || '-',
-	documentCount: 0,
-	advancedUsage: null,
-	sourceType: values.sourceType,
-	embeddingModel: values.embeddingModel,
-	clusterName: values.clusterName?.trim() || '-',
-	updatedAt: now,
-	createdAt: now,
-	groupKey: values.groupKey,
-});
-
-export const updateKnowledgeRecord = (
-	record: KnowledgeBaseRecord,
-	values: KnowledgeFormValues,
-	now: string,
-): KnowledgeBaseRecord => ({
-	...record,
-	name: values.name,
-	description: values.description?.trim() || '-',
-	groupKey: values.groupKey,
-	sourceType: values.sourceType,
-	embeddingModel: values.embeddingModel,
-	clusterName: values.clusterName?.trim() || '-',
-	updatedAt: now,
-});
-
-export const moveKnowledgeRecords = (
-	records: KnowledgeBaseRecord[],
-	keys: string[],
-	targetGroupKey: string,
-	now: string,
-): KnowledgeBaseRecord[] => {
-	const keySet = new Set(keys);
-
-	return records.map((record) =>
-		keySet.has(record.key)
-			? {
-				...record,
-				groupKey: targetGroupKey,
-				updatedAt: now,
-			}
-			: record,
-	);
-};

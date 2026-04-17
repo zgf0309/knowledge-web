@@ -10,7 +10,7 @@ const defaultLayoutSettings: ProLayoutProps & {
   "fixedHeader": true,
   "fixSiderbar": true,
   "pwa": true,
-  "logo": "logo.svg",
+  "logo": "/logo.svg",
   "token": {},
   "splitMenus": false,
   "menuHeaderRender": false,

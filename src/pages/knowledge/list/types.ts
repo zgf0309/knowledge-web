@@ -1,41 +1,39 @@
+import { keys } from 'lodash';
 import type { Key } from 'react';
 
 export interface KnowledgeGroup {
-	key: string;
-	title: string;
+	group_id: string | null;
+	name: string;
+	description: string;
+	parent_id: string | null;
+	kb_count?: number;
 	children?: KnowledgeGroup[];
+	[key: string]: any;
 }
 
 export interface KnowledgeBaseRecord {
-	key: string;
-	name: string;
-	id: string;
-	description: string;
-	documentCount: number;
-	advancedUsage: number | null;
-	sourceType: string;
-	embeddingModel: string;
-	clusterName: string;
-	updatedAt: string;
-	createdAt: string;
-	groupKey: string;
+	group_id?: string;
+	knowledge_name: string;
+	knowledge_id: string;
+	knowledge_desc: string;
+	language: string;
+	scope: number | null;
+	status: string;
+	tenant_id: string;
+	create_date: string;
+	create_time: string;
 }
-
 export interface KnowledgeFormValues {
-	name: string;
-	description?: string;
-	groupKey: string;
-	sourceType: string;
-	embeddingModel: string;
-	clusterName?: string;
+	knowledge_name: string;
+	knowledge_id: string;
+	knowledge_desc: string;
+	language: string;
+	scope: number | null;
+	status: string;
+	tenant_id: string;
+	create_date: string;
+	create_time: string;
 }
-
-export interface KnowledgeEditorState {
-	open: boolean;
-	mode: 'create' | 'edit';
-	recordKey?: string;
-}
-
 export interface KnowledgePageState {
 	current: number;
 	pageSize: number;

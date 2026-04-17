@@ -2,107 +2,87 @@ import { AimOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { Button, Divider, Flex, Modal, message } from 'antd';
 import type { Key } from 'react';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import KnowledgeBatchMovePopover from './list/components/KnowledgeBatchMovePopover';
 import KnowledgeEditorModal from './list/components/KnowledgeEditorModal';
-import KnowledgeGroupTree from './list/components/KnowledgeGroupTree';
+import KnowledgeGroupManager from './list/components/KnowledgeGroupManager';
 import KnowledgeListToolbar from './list/components/KnowledgeListToolbar';
 import KnowledgeTableSection from './list/components/KnowledgeTableSection';
 import {
 	INITIAL_BATCH_MOVE_STATE,
 	DEFAULT_GROUPS,
-	INITIAL_EDITOR_STATE,
-	INITIAL_PAGE_STATE,
-	INITIAL_RECORDS,
 } from './list/constants';
 import type {
 	KnowledgeBaseRecord,
 	KnowledgeBatchMoveState,
-	KnowledgeEditorState,
 	KnowledgeFormValues,
+	KnowledgeGroup,
 } from './list/types';
-import {
-	appendChildGroup,
-	buildGroupOptions,
-	collectBranchKeys,
-	collectGroupKeys,
-	createKnowledgeRecord,
-	filterGroups,
-	filterRecords,
-	findGroupPathTitles,
-	getGroupCounts,
-	getGroupTitleMap,
-	moveKnowledgeRecords,
-	paginateRecords,
-	removeGroupByKey,
-	updateGroupTitle,
-	updateKnowledgeRecord,
-} from './list/utils';
 import './list.less';
+import {queryKnowledgeList} from '@/services/knowledge/api';
+import { getLocalStorage, StorageKeys } from '@/utils/storage';
+import { useQuery } from '@tanstack/react-query';
 
 const KnowledgeListPage = () => {
+	const emptyRecords = useMemo<KnowledgeBaseRecord[]>(() => [], []);
+	const current_user: any = getLocalStorage(StorageKeys.CURRENT_USER);
+	const [pagination, setPagination] = useState({
+		current: 1,
+		pageSize: 10,
+	});
 	const [messageApi, messageContextHolder] = message.useMessage();
-	const [modal, modalContextHolder] = Modal.useModal();
-	const [groups, setGroups] = useState(DEFAULT_GROUPS);
-	const [records, setRecords] = useState(INITIAL_RECORDS);
-	const [selectedGroupKey, setSelectedGroupKey] = useState('all');
-	const groupKeyword = '';
-	const [searchKeyword, setSearchKeyword] = useState('');
-	const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
+	const [groups, setGroups] = useState<KnowledgeGroup[]>(DEFAULT_GROUPS);
+	const [selectedGroupKey, setSelectedGroupKey] = useState('all'); // 当前选中的群组
+	const [searchKeyword, setSearchKeyword] = useState(''); // 当前知识库搜索关键字
+	const [currentGroupTitle, setCurrentGroupTitle] = useState('全部群组'); // 当前选中群组标题
+	const [selectRow, setSelectRow] = useState<KnowledgeBaseRecord | null>(null); // 当前选中知识库记录
+	const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]); // 当前选中知识库记录的 key 列表
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 侧边栏折叠状态
+	const [editorOpen, setEditorOpen] = useState<boolean>(false); // 当前知识库编辑模态框状态
+
+	
 	const [batchMode, setBatchMode] = useState(false);
-	const [pageState, setPageState] = useState(INITIAL_PAGE_STATE);
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-	const [expandedKeys, setExpandedKeys] = useState<Key[]>(() => collectGroupKeys(DEFAULT_GROUPS));
-	const [hoveredGroupKey, setHoveredGroupKey] = useState<string>();
-	const [openedMenuGroupKey, setOpenedMenuGroupKey] = useState<string>();
-	const [pendingChildParentKey, setPendingChildParentKey] = useState<string>();
-	const [pendingChildTitle, setPendingChildTitle] = useState('');
-	const [editingGroupKey, setEditingGroupKey] = useState<string>();
-	const [editingGroupTitle, setEditingGroupTitle] = useState('');
-	const [editorState, setEditorState] = useState<KnowledgeEditorState>(INITIAL_EDITOR_STATE);
+	
+	
 	const [batchMoveState, setBatchMoveState] = useState<KnowledgeBatchMoveState>(INITIAL_BATCH_MOVE_STATE);
+	const [modal, modalContextHolder] = Modal.useModal();
 
-	const deferredSearchKeyword = useDeferredValue(searchKeyword);
-	const groupTitleMap = useMemo(() => getGroupTitleMap(groups), [groups]);
-	const groupCountMap = useMemo(() => getGroupCounts(groups, records), [groups, records]);
-	const filteredGroups = useMemo(() => filterGroups(groups, groupKeyword), [groupKeyword, groups]);
-	const groupOptions = useMemo(() => buildGroupOptions(groups), [groups]);
-	const currentGroupTitle = groupTitleMap.get(selectedGroupKey) ?? '全部群组';
-	const editingRecord = useMemo(
-		() => records.find((record) => record.key === editorState.recordKey),
-		[editorState.recordKey, records],
-	);
+	// 知识库列表数据
+	const { data: knowledgeList, isLoading } = useQuery({
+		queryKey: ['KnowledgeList', pagination, searchKeyword, selectedGroupKey],
+		queryFn: () =>
+			queryKnowledgeList({
+				knowledge_name: searchKeyword,
+				group_id: selectedGroupKey === 'all' ? '' : selectedGroupKey,
+				tenant_id: current_user?.tenant_id,
+				scope: undefined,
+				page_num: pagination.current,
+				page_size: pagination.pageSize,
+			}),
+		select: (s: any) => s.data,
+	});
 
-	const filteredRecords = useMemo(
-		() => filterRecords(records, selectedGroupKey, deferredSearchKeyword),
-		[deferredSearchKeyword, records, selectedGroupKey],
-	);
-	const { currentPage, pagedRecords } = useMemo(
-		() => paginateRecords(filteredRecords, pageState.current, pageState.pageSize),
-		[filteredRecords, pageState.current, pageState.pageSize],
-	);
-	const currentPageKeys = useMemo(() => pagedRecords.map((record) => record.key), [pagedRecords]);
-	const allCurrentPageSelected =
-		currentPageKeys.length > 0 && currentPageKeys.every((key) => selectedRowKeys.includes(key));
-	const partialCurrentPageSelected =
-		currentPageKeys.some((key) => selectedRowKeys.includes(key)) && !allCurrentPageSelected;
+	const knowledgeRecords = useMemo<KnowledgeBaseRecord[]>(() => knowledgeList?.list ?? emptyRecords, [emptyRecords, knowledgeList?.list]);
+	
+	// 计算当前页知识库的 key 列表
+	const currentPageKeys = useMemo(() => {
+		return knowledgeRecords.map((record) => record.knowledge_id);
+	}, [knowledgeRecords]);
 
+	const allCurrentPageSelected = currentPageKeys.length > 0 && currentPageKeys.every((key: string) => selectedRowKeys.includes(key));
+	const partialCurrentPageSelected = currentPageKeys.some((key: string) => selectedRowKeys.includes(key)) && !allCurrentPageSelected;
+
+	// 重置到第一页
 	const resetToFirstPage = () => {
-		setPageState((current) => ({ ...current, current: 1 }));
+		setPagination({
+			...pagination,
+			current: 1,
+		});
 	};
 
-	const clearPendingChild = () => {
-		setPendingChildParentKey(undefined);
-		setPendingChildTitle('');
-	};
-
-	const clearEditingGroup = () => {
-		setEditingGroupKey(undefined);
-		setEditingGroupTitle('');
-	};
-
+  // 关闭知识库编辑模态框
 	const closeEditor = () => {
-		setEditorState(INITIAL_EDITOR_STATE);
+		setEditorOpen(false);
 	};
 
 	const closeBatchMode = () => {
@@ -128,141 +108,19 @@ const KnowledgeListPage = () => {
 		resetToFirstPage();
 	};
 
-	const handleCommitPendingChild = () => {
-		if (!pendingChildParentKey) {
-			return;
-		}
+	const handleGroupDataChange = useCallback(
+		({ groups: nextGroups }: { groups: KnowledgeGroup[] }) => {
+			setGroups(nextGroups);
+		},
+		[],
+	);
 
-		const nextTitle = pendingChildTitle.trim();
-		if (!nextTitle) {
-			clearPendingChild();
-			return;
-		}
-
-		setGroups((currentGroups) =>
-			appendChildGroup(currentGroups, pendingChildParentKey, {
-				key: `group-${Date.now()}`,
-				title: nextTitle,
-			}),
-		);
-		setExpandedKeys((currentKeys) =>
-			currentKeys.includes(pendingChildParentKey)
-				? currentKeys
-				: [...currentKeys, pendingChildParentKey],
-		);
-		clearPendingChild();
-	};
-
-	const createChildGroup = (parentKey: string, title: string) => {
-		setGroups((currentGroups) =>
-			appendChildGroup(currentGroups, parentKey, {
-				key: `group-${Date.now()}`,
-				title,
-			}),
-		);
-		setExpandedKeys((currentKeys) =>
-			currentKeys.includes(parentKey) ? currentKeys : [...currentKeys, parentKey],
-		);
-	};
-
-	const handleAddChild = (parentKey: string) => {
-		clearEditingGroup();
-		setPendingChildParentKey(parentKey);
-		setPendingChildTitle('');
-		setExpandedKeys((currentKeys) =>
-			currentKeys.includes(parentKey) ? currentKeys : [...currentKeys, parentKey],
-		);
-	};
-
-	const handleCommitEditingGroup = () => {
-		if (!editingGroupKey) {
-			return;
-		}
-
-		const nextTitle = editingGroupTitle.trim();
-		if (!nextTitle) {
-			clearEditingGroup();
-			return;
-		}
-
-		setGroups((currentGroups) => updateGroupTitle(currentGroups, editingGroupKey, nextTitle));
-		clearEditingGroup();
-	};
-
-	const handleStartEditGroup = (groupKey: string, title: string) => {
-		clearPendingChild();
-		setEditingGroupKey(groupKey);
-		setEditingGroupTitle(title);
-	};
-
-	const handleCopyGroupPath = async (groupKey: string) => {
-		const pathTitles = findGroupPathTitles(groups, groupKey);
-		if (!pathTitles?.length) {
-			messageApi.error('未找到当前节点路径');
-			return;
-		}
-
-		try {
-			await navigator.clipboard.writeText(pathTitles.join('/'));
-			messageApi.success('路径已复制');
-		} catch {
-			messageApi.error('复制失败，请手动复制');
-		}
-	};
-
-	const handleDeleteGroup = (groupKey: string, title: string) => {
-		if (groupKey === 'all') {
-			messageApi.warning('默认根节点不支持删除');
-			return;
-		}
-
-		const branchKeys = collectBranchKeys(groups, groupKey);
-		if (!branchKeys.length) {
-			return;
-		}
-
-		modal.confirm({
-			title: `确认删除“${title}”吗？`,
-			content: '删除后，该节点及其下级节点会一并移除。',
-			okText: '确认删除',
-			cancelText: '取消',
-			okButtonProps: { danger: true },
-			onOk: () => {
-				setGroups((currentGroups) => removeGroupByKey(currentGroups, groupKey));
-				setExpandedKeys((currentKeys) =>
-					currentKeys.filter((key) => !branchKeys.includes(String(key))),
-				);
-				setRecords((currentRecords) =>
-					currentRecords.filter((record) => !branchKeys.includes(record.groupKey)),
-				);
-				if (branchKeys.includes(selectedGroupKey)) {
-					setSelectedGroupKey('all');
-				}
-				if (pendingChildParentKey && branchKeys.includes(pendingChildParentKey)) {
-					clearPendingChild();
-				}
-				if (editingGroupKey && branchKeys.includes(editingGroupKey)) {
-					clearEditingGroup();
-				}
-				messageApi.success('节点已删除');
-			},
-		});
-	};
-
-	const openCreateModal = () => {
-		setEditorState({ open: true, mode: 'create' });
-	};
-
+  // 打开编辑模态框
 	const openEditModal = (record: KnowledgeBaseRecord) => {
-		setEditorState({ open: true, mode: 'edit', recordKey: record.key });
+		setSelectRow(record);
+		setEditorOpen(true);
 	};
-
-	const removeRecords = (keys: string[]) => {
-		setRecords((currentRecords) => currentRecords.filter((record) => !keys.includes(record.key)));
-		setSelectedRowKeys((currentKeys) => currentKeys.filter((key) => !keys.includes(String(key))));
-		resetToFirstPage();
-	};
-
+	// 删除知识库
 	const handleDelete = (keys: string[]) => {
 		if (!keys.length) {
 			messageApi.warning('请先选择要删除的知识库');
@@ -276,61 +134,47 @@ const KnowledgeListPage = () => {
 			cancelText: '取消',
 			okButtonProps: { danger: true },
 			onOk: () => {
-				removeRecords(keys);
 				messageApi.success('删除成功');
 			},
 		});
 	};
 
+	// 批量删除知识库
 	const handleBatchDelete = () => {
 		handleDelete(selectedRowKeys.map(String));
 	};
 
+	// 移动知识库
 	const handleConfirmBatchMove = (targetGroupKey: string) => {
+		console.log('批量移动到分组', targetGroupKey);
 		const keys = selectedRowKeys.map(String);
 		if (!keys.length) {
 			messageApi.warning('请先选择要移动的知识库');
 			return;
 		}
-
-		const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-		setRecords((currentRecords) => moveKnowledgeRecords(currentRecords, keys, targetGroupKey, now));
+		console.log('要移动的知识库 ID 列表', keys);
 		setSelectedRowKeys([]);
 		closeBatchMoveModal();
 		messageApi.success('知识库群组已更新');
 	};
 
+	// 批量选择/取消选择当前页知识库
 	const handleToggleSelectAllCurrentPage = (checked: boolean) => {
 		if (checked) {
 			setSelectedRowKeys((currentKeys) => Array.from(new Set([...currentKeys, ...currentPageKeys])));
 			return;
 		}
-
-		setSelectedRowKeys((currentKeys) =>
-			currentKeys.filter((key) => !currentPageKeys.includes(String(key))),
-		);
+		setSelectedRowKeys((currentKeys) => currentKeys.filter((key) => !currentPageKeys.includes(String(key))));
 	};
 
 	const handleSubmit = async (values: KnowledgeFormValues) => {
-		const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-		if (editorState.mode === 'create') {
-			setRecords((currentRecords) => [createKnowledgeRecord(values, now), ...currentRecords]);
-			messageApi.success('知识库已创建');
-		} else {
-			setRecords((currentRecords) =>
-				currentRecords.map((record) =>
-					record.key === editorState.recordKey ? updateKnowledgeRecord(record, values, now) : record,
-				),
-			);
-			messageApi.success('知识库已更新');
-		}
-
+		void values;
+		messageApi.success('知识库已更新');
 		closeEditor();
 	};
 
 	return (
-		<PageContainer title={false} breadcrumb={false} className="knowledge-base-list-page">
+		<PageContainer title={false} breadcrumb={undefined} className="knowledge-base-list-page">
 			{messageContextHolder}
 			{modalContextHolder}
 			<Flex vertical>
@@ -354,10 +198,8 @@ const KnowledgeListPage = () => {
 								open={batchMoveState.open}
 								disabled={!selectedRowKeys.length}
 								groups={groups}
-								groupCountMap={groupCountMap}
 								onOpenChange={handleBatchMovePopoverOpenChange}
 								onConfirm={handleConfirmBatchMove}
-								onCreateChildGroup={createChildGroup}
 							>
 								<Button disabled={!selectedRowKeys.length}>批量移动至</Button>
 							</KnowledgeBatchMovePopover>
@@ -365,67 +207,44 @@ const KnowledgeListPage = () => {
 						onToggleSidebar={() => setSidebarCollapsed((value) => !value)}
 						onSearchChange={handleSearchChange}
 						onOpenBatchMode={() => setBatchMode(true)}
-						onOpenCreateModal={openCreateModal}
 						onToggleSelectAllCurrentPage={handleToggleSelectAllCurrentPage}
 						onBatchDelete={handleBatchDelete}
 						onCloseBatchMode={closeBatchMode}
 					/>
 					<Flex align="flex-start" gap={10}>
 						{!sidebarCollapsed ? (
-							<KnowledgeGroupTree
-								groups={filteredGroups}
+							<KnowledgeGroupManager
+								tenantId={current_user?.tenant_id}
 								selectedGroupKey={selectedGroupKey}
-								expandedKeys={expandedKeys}
-								groupCountMap={groupCountMap}
-								hoveredGroupKey={hoveredGroupKey}
-								openedMenuGroupKey={openedMenuGroupKey}
-								pendingChildParentKey={pendingChildParentKey}
-								pendingChildTitle={pendingChildTitle}
-								editingGroupKey={editingGroupKey}
-								editingGroupTitle={editingGroupTitle}
-								onExpandedKeysChange={setExpandedKeys}
 								onSelectGroup={handleSelectGroup}
-								onHoveredGroupKeyChange={setHoveredGroupKey}
-								onOpenedMenuGroupKeyChange={setOpenedMenuGroupKey}
-								onPendingChildTitleChange={setPendingChildTitle}
-								onEditingGroupTitleChange={setEditingGroupTitle}
-								onCommitPendingChild={handleCommitPendingChild}
-								onClearPendingChild={clearPendingChild}
-								onAddChild={handleAddChild}
-								onCommitEditingGroup={handleCommitEditingGroup}
-								onClearEditingGroup={clearEditingGroup}
-								onStartEditGroup={(group) => handleStartEditGroup(group.key, group.title)}
-								onCopyGroupPath={(groupKey) => {
-									void handleCopyGroupPath(groupKey);
-								}}
-								onDeleteGroup={(group) => handleDeleteGroup(group.key, group.title)}
+								onCurrentGroupTitleChange={setCurrentGroupTitle}
+								onGroupDataChange={handleGroupDataChange}
 							/>
 						) : null}
 						<KnowledgeTableSection
+						  isLoading={isLoading}
 							currentGroupTitle={currentGroupTitle}
-							dataSource={pagedRecords}
+							dataSource={knowledgeRecords}
 							selectedRowKeys={selectedRowKeys}
-							total={filteredRecords.length}
-							currentPage={currentPage}
-							pageSize={pageState.pageSize}
+							total={knowledgeList?.total ?? 0}
+							currentPage={pagination.current}
+							pageSize={pagination.pageSize}
 							onSelectionChange={setSelectedRowKeys}
 							onEdit={openEditModal}
 							onDelete={handleDelete}
 							onPageChange={(page, pageSize) => {
-								setPageState({ current: page, pageSize });
+								setPagination({ current: page, pageSize });
 							}}
 						/>
 					</Flex>
 				</Flex>
 			</Flex>
-			<KnowledgeEditorModal
-				editorState={editorState}
-				record={editingRecord}
-				groupOptions={groupOptions}
-				defaultGroupKey={selectedGroupKey === 'all' ? groupOptions[0]?.value : selectedGroupKey}
+			{selectRow?.knowledge_id && <KnowledgeEditorModal
+				editorOpen={editorOpen}
+				record={selectRow}
 				onCancel={closeEditor}
 				onSubmit={handleSubmit}
-			/>
+			/>}
 		</PageContainer>
 	);
 };

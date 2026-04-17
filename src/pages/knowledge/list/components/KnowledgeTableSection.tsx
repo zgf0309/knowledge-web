@@ -1,14 +1,16 @@
-import { FileTextOutlined, FilterOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Pagination, Space, Table, Tooltip, Typography } from 'antd';
+import { FileTextOutlined } from '@ant-design/icons';
+import { Button, Flex, Pagination, Space, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import type { Key } from 'react';
 import { useMemo } from 'react';
 import type { KnowledgeBaseRecord } from '../types';
 import { useNavigate } from '@umijs/max';
+import Loading from './Loading';
 
 const { Text } = Typography;
 
 interface KnowledgeTableSectionProps {
+	isLoading?: boolean;
 	currentGroupTitle: string;
 	dataSource: KnowledgeBaseRecord[];
 	selectedRowKeys: Key[];
@@ -22,6 +24,7 @@ interface KnowledgeTableSectionProps {
 }
 
 const KnowledgeTableSection = ({
+	isLoading = false,
 	currentGroupTitle,
 	dataSource,
 	selectedRowKeys,
@@ -33,13 +36,13 @@ const KnowledgeTableSection = ({
 	onDelete,
 	onPageChange,
 }: KnowledgeTableSectionProps) => {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
 	const columns = useMemo<TableColumnsType<KnowledgeBaseRecord>>(
 		() => [
 			{
 				title: '知识库名称/ID',
-				dataIndex: 'name',
-				key: 'name',
+				dataIndex: 'knowledge_name',
+				key: 'knowledge_name',
 				width: 260,
 				render: (_, record) => (
 					<Flex vertical gap={2} style={{ minWidth: 0 }}>
@@ -47,72 +50,42 @@ const KnowledgeTableSection = ({
 							<span className="knowledge-base-list__name-icon">
 								<FileTextOutlined />
 							</span>
-							<a className="knowledge-base-list__name-link">{record.name}</a>
+							<a className="knowledge-base-list__name-link">{record.knowledge_name}</a>
 						</Flex>
-						<Text className="knowledge-base-list__subtext">{record.id}</Text>
+						<Text className="knowledge-base-list__subtext">{record.knowledge_id}</Text>
 					</Flex>
 				),
 			},
 			{
 				title: '描述',
-				dataIndex: 'description',
-				key: 'description',
+				dataIndex: 'knowledge_desc',
+				key: 'knowledge_desc',
 				width: 220,
 				render: (value) => <span className="knowledge-base-list__ellipsis">{value || '-'}</span>,
 			},
 			{
-				title: '文件数量',
-				dataIndex: 'documentCount',
-				key: 'documentCount',
+				title: '类型',
+				dataIndex: 'scope',
+				key: 'scope',
 				width: 100,
 			},
 			{
-				title: (
-					<Space size={4}>
-						<span>高级解析累计用量</span>
-						<Tooltip title="展示知识库高级解析累计使用量">
-							<QuestionCircleOutlined className="knowledge-base-list__column-icon" />
-						</Tooltip>
-					</Space>
-				),
-				dataIndex: 'advancedUsage',
-				key: 'advancedUsage',
-				width: 140,
+				title: '状态',
+				dataIndex: 'status',
+				key: 'status',
+				width: 100,
 				render: (value) => value ?? '-',
 			},
 			{
-				title: (
-					<Space size={4}>
-						<span>托管资源</span>
-						<FilterOutlined className="knowledge-base-list__column-icon" />
-					</Space>
-				),
-				dataIndex: 'sourceType',
-				key: 'sourceType',
+				title: '语言',
+				dataIndex: 'language',
+				key: 'language',
 				width: 120,
 			},
 			{
-				title: '向量模型',
-				dataIndex: 'embeddingModel',
-				key: 'embeddingModel',
-				width: 180,
-			},
-			{
-				title: '集群实例名称',
-				dataIndex: 'clusterName',
-				key: 'clusterName',
-				width: 180,
-			},
-			{
-				title: '更新时间',
-				dataIndex: 'updatedAt',
-				key: 'updatedAt',
-				width: 180,
-			},
-			{
 				title: '创建时间',
-				dataIndex: 'createdAt',
-				key: 'createdAt',
+				dataIndex: 'create_date',
+				key: 'create_date',
 				width: 180,
 			},
 			{
@@ -125,31 +98,39 @@ const KnowledgeTableSection = ({
 						<Button type="link" onClick={() => onEdit(record)}>
 							编辑
 						</Button>
-						<Button danger type="link" onClick={() => onDelete([record.key])}>
+						<Button danger type="link" onClick={() => onDelete([record.knowledge_id])}>
 							删除
 						</Button>
 					</Space>
 				),
 			},
 		],
-		[onDelete, onEdit],
+		[navigate, onDelete, onEdit],
 	);
 
 	return (
 		<div className="knowledge-base-list__main">
 			<Text className="knowledge-base-list__group-hint">当前群组：{currentGroupTitle}</Text>
-			<Table<KnowledgeBaseRecord>
-				className="knowledge-base-list__table"
-				rowKey="key"
-				columns={columns}
-				dataSource={dataSource}
-				pagination={false}
-				rowSelection={{
-					selectedRowKeys,
-					onChange: onSelectionChange,
-				}}
-				scroll={{ x: 1600 }}
-			/>
+			<Flex>
+				{isLoading ? (
+					<Flex justify='center' align='center' style={{ width: '100%', height: 100 }}>
+						<Loading />
+					</Flex>
+				) : (
+					<Table<KnowledgeBaseRecord>
+						className="knowledge-base-list__table"
+						rowKey="knowledge_id"
+						columns={columns}
+						dataSource={dataSource}
+						pagination={false}
+						rowSelection={{
+							selectedRowKeys,
+							onChange: onSelectionChange,
+						}}
+						scroll={{ x: 1600 }}
+					/>
+				)}
+			</Flex>
 			<Flex justify="flex-end" className="knowledge-base-list__pagination">
 				<Pagination
 					current={currentPage}

@@ -15,6 +15,8 @@ import { message } from 'antd';
 const NAME_SPACE = 'knowledge-app';
 const DEFAULT_TIMEOUT = 24 * 60 * 60 * 1000;
 const AUTO_LOGOUT_FLAG = '__AUTO_LOGOUT_TRIGGERED__';
+const CURRENT_USER: any = getLocalStorage<string>(StorageKeys.CURRENT_USER);
+const TENANT_ID = CURRENT_USER?.tenant_id || '';
 
 type RequestResult<T> = API.ApiResponse<T> | Blob;
 type HeaderValue = string | number | boolean;
@@ -89,6 +91,8 @@ const createRequestOptions = (options: EnhancedRequestOptions): RequestOptions =
 
 	if (accessToken) {
 		headers.token = accessToken;
+		headers.Authorization = `Bearer ${accessToken}`;
+		headers.tenant_id = TENANT_ID;
 	}
 
 	return {
@@ -111,8 +115,6 @@ const handleBusinessError = (response: API.ApiResponse<unknown>): never => {
 };
 
 const handleRequestError = (
-	url: string,
-	requestOptions: EnhancedRequestOptions,
 	error: any,
 ): void => {
 	if ((error?.type === 'Timeout' || /timeout/i.test(error?.message || ''))) {
@@ -153,7 +155,7 @@ export async function request<T>(
 
 		return handleBusinessError(normalizedResponse);
 	} catch (error: any) {
-		handleRequestError(url, requestOptions, error);
+		handleRequestError(error);
 		throw error;
 	}
 }

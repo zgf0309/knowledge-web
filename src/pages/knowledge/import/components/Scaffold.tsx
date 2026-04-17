@@ -158,18 +158,18 @@ export const ImportFooter = ({
 			
 			{currentStep === 0 ? (
 				<>
-				{
-					type === 'add' ? (
-						<>
-							<Button type="primary" onClick={onNext}>创建并导入</Button>
-							<Button onClick={() => { navigate(-1); }}>仅创建</Button>
-						</>
-					) : (
-						<Button type="primary" onClick={onNext}>
-						下一步
-					</Button>
-					)
-				}
+					{
+						type === 'add' ? (
+							<>
+								<Button type="primary" onClick={onNext}>创建并导入</Button>
+								<Button onClick={() => { navigate(-1); }}>仅创建</Button>
+							</>
+						) : (
+							<Button type="primary" onClick={onNext}>
+							下一步
+						</Button>
+						)
+					}
 				</>
 			) : (
 				<Button type="primary" onClick={onSubmit}>

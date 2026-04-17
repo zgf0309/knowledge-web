@@ -15,7 +15,6 @@ interface KnowledgeListToolbarProps {
 	onToggleSidebar: () => void;
 	onSearchChange: (keyword: string) => void;
 	onOpenBatchMode: () => void;
-	onOpenCreateModal: () => void;
 	onToggleSelectAllCurrentPage: (checked: boolean) => void;
 	onBatchDelete: () => void;
 	onCloseBatchMode: () => void;
@@ -32,7 +31,6 @@ const KnowledgeListToolbar = ({
 	onToggleSidebar,
 	onSearchChange,
 	onOpenBatchMode,
-	onOpenCreateModal,
 	onToggleSelectAllCurrentPage,
 	onBatchDelete,
 	onCloseBatchMode,

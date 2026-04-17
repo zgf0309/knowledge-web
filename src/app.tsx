@@ -1,6 +1,7 @@
 import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
+import ReactQueryProvider from '@/ReactQueryProvider';
 import '@ant-design/v5-patch-for-react-19';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history } from '@umijs/max';
@@ -16,6 +17,7 @@ type MicroAppProps = {
   storagePrefix?: string;
   subAppName?: string;
   token?: string;
+  refresh_token?: string;
   settings?: any;
   userInfo?: any;
 };
@@ -115,7 +117,6 @@ export async function getInitialState(): Promise<{
   console.log('accessToken in getInitialState=====>', accessToken);
   if (accessToken) {
     const userInfo: any = getLocalStorage(StorageKeys.CURRENT_USER);
-    console.log('defaultSettings in getInitialState=====>', defaultSettings);
     return {
       currentUser: userInfo ? JSON.parse(userInfo) : undefined,
       settings: defaultSettings as Partial<LayoutSettings>,
@@ -179,6 +180,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     if (props?.token) {
       setLocalStorage(StorageKeys.ACCESS_TOKEN, props.token);
     }
+    if (props?.refresh_token) {
+      setLocalStorage(StorageKeys.REFRESH_TOKEN, props.refresh_token);
+    }
     if (props?.userInfo) {
       setLocalStorage(StorageKeys.CURRENT_USER, JSON.stringify(props.userInfo));
     }
@@ -201,7 +205,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         });
       }
     }
-  }, [currentWindow?.$wujie, props?.token, props?.userInfo]);
+  }, [currentWindow?.$wujie, props?.token, props?.refresh_token, props?.userInfo]);
   return {
     actionsRender: () => [<Question key="doc" />],
     avatarProps: {
@@ -241,7 +245,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       // if (initialState?.loading) return <PageLoading />;
       return (
         <>
+        <ReactQueryProvider>
           {children}
+            </ReactQueryProvider>
           {isDev && (
             <SettingDrawer
               disableUrlParams
