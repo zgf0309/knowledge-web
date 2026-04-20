@@ -1,8 +1,11 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Steps, Tooltip, Typography } from 'antd';
+import { Button, Flex, message, Steps, Tooltip, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import type { ImportSelectionOption } from '../types';
 import { useNavigate } from '@umijs/max';
+import { addKnowledgeList } from '@/services/knowledge/api';
+import { useImportContext } from '../context';
+import { buildCreateKnowledgePayload } from '../payload';
 
 const { Text } = Typography;
 
@@ -92,7 +95,7 @@ interface SelectionCardGroupProps<T extends string> {
 	options: Array<ImportSelectionOption<T>>;
 	value: T;
 	onChange: (value: T) => void;
-	columns: 2 | 3;
+	columns: 2 | 3 | 4;
 }
 
 export const SelectionCardGroup = <T extends string>({
@@ -153,16 +156,41 @@ export const ImportFooter = ({
 	onSubmit,
 }: ImportFooterProps) => {
 	const navigate = useNavigate();
+	const { currentUser, formValues, setTargetKnowledgeId } = useImportContext();
+
+	const createdKnowledgeList = async (submitType: 'import' | 'add') => {
+		try {
+			const res:any = await addKnowledgeList(buildCreateKnowledgePayload(formValues, currentUser?.tenant_id));
+			const {code, data} = res;
+			if(code === 200){
+				setTargetKnowledgeId(data?.knowledge_id ?? data?.id ?? '');
+				if(submitType === 'import'){
+					onNext();
+				} else {
+					message.success('创建知识库成功');
+					navigate(-1);
+				}
+				return;
+			} else {
+				message.error('创建知识库失败');
+			}
+		} catch {
+			message.error('创建知识库失败');
+		}
+	};
+
 	return <Flex justify="space-between" align="center" className="knowledge-import-route__footer">
 		<Flex gap={12} className="knowledge-import-route__footer-button">
 			
 			{currentStep === 0 ? (
-				<>
+				<Flex gap={12}>
 					{
 						type === 'add' ? (
 							<>
-								<Button type="primary" onClick={onNext}>创建并导入</Button>
-								<Button onClick={() => { navigate(-1); }}>仅创建</Button>
+								<Button type="primary" onClick={() => { void createdKnowledgeList('import'); }}>创建并导入</Button>
+								<Button onClick={() => { 
+									void createdKnowledgeList('add');
+								}}>仅创建</Button>
 							</>
 						) : (
 							<Button type="primary" onClick={onNext}>
@@ -170,7 +198,7 @@ export const ImportFooter = ({
 						</Button>
 						)
 					}
-				</>
+				</Flex>
 			) : (
 				<Button type="primary" onClick={onSubmit}>
 					确认导入

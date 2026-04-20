@@ -209,7 +209,7 @@ const KnowledgeImportModal = ({
 							</Flex>
 							<div className="knowledge-import-modal__grid knowledge-import-modal__grid--types">
 								{IMPORT_FILE_TYPE_OPTIONS.map((option) => {
-									const selected = importConfig.fileType === option.value;
+									const selected = importConfig.doc_category === option.value;
 
 									return (
 										<button
@@ -217,7 +217,7 @@ const KnowledgeImportModal = ({
 											type="button"
 											className={`knowledge-import-modal__option-card${selected ? ' knowledge-import-modal__option-card--active' : ''}`}
 											onClick={() => {
-												updateConfig({ fileType: option.value });
+												updateConfig({ doc_category: option.value });
 											}}
 										>
 											<Text strong>{option.title}</Text>

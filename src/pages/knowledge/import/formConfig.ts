@@ -43,22 +43,22 @@ const truncateFileTitle = (fileName: string, maxLength = 255) => {
 const replaceFileName = (file: File, fileName: string) =>
 	new File([file], fileName, { type: file.type, lastModified: file.lastModified });
 
-const isDocumentImport = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
-	formValues.mode === 'byType' && formValues.fileType === 'document';
+const isDocumentImport = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
+	formValues.mode === 'byType' && formValues.doc_category === 'text';
 
-const isQaImport = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
-	formValues.mode === 'byType' && formValues.fileType === 'qa';
+const isQaImport = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
+	formValues.mode === 'byType' && formValues.doc_category === 'table';
 
-const isImageImport = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
-	formValues.mode === 'byType' && formValues.fileType === 'image';
+const isImageImport = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
+	formValues.mode === 'byType' && formValues.doc_category === 'image';
 
-const isAudioImport = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
-	formValues.mode === 'byType' && formValues.fileType === 'audio';
+const isAudioImport = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
+	formValues.mode === 'byType' && formValues.doc_category === 'audio';
 
-export const isWebImport = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
-	formValues.mode === 'byType' && formValues.fileType === 'web';
+export const isWebImport = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
+	formValues.mode === 'byType' && formValues.doc_category === 'web';
 
-const getMaxUploadCount = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+const getMaxUploadCount = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isQaImport(formValues) ? MAX_QA_UPLOAD_COUNT : MAX_UPLOAD_COUNT;
 
 const WEB_URL_PATTERN = /^https?:\/\//i;
@@ -181,13 +181,13 @@ export const updateWebUrlItem = (
 export const removeWebUrl = (urls: WebImportItem[], id: string) =>
 	urls.filter((item) => item.id !== id);
 
-export const shouldShowWebConfig = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const shouldShowWebConfig = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isWebImport(formValues);
 
-export const shouldShowFileSourceSelector = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const shouldShowFileSourceSelector = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	!isWebImport(formValues);
 
-export const shouldShowFileUploader = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const shouldShowFileUploader = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	!isWebImport(formValues);
 
 export const validateWebImportBeforeSubmit = (
@@ -494,7 +494,7 @@ const validateAudioFile = async (file: File) => {
 
 const normalizeUploadFile = (
 	file: File,
-	formValues: Pick<ImportFormValues, 'mode' | 'fileType'>,
+	formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>,
 	messageApi: MessageInstance,
 ) => {
 	if (!isQaImport(formValues)) {
@@ -516,7 +516,7 @@ const getIncomingFileIndex = (file: File, fileList: File[]) =>
 const validateFileBeforeUpload = async (
 	file: File,
 	fileList: File[],
-	formValues: Pick<ImportFormValues, 'mode' | 'fileType' | 'pendingFiles'>,
+	formValues: Pick<ImportFormValues, 'mode' | 'doc_category' | 'pendingFiles'>,
 	messageApi: MessageInstance,
 ) => {
 	const maxUploadCount = getMaxUploadCount(formValues);
@@ -649,7 +649,7 @@ export const downloadWebBatchTemplate = () => {
 	);
 };
 
-export const getUploadHintText = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const getUploadHintText = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isDocumentImport(formValues)
 		? documentUploadHint
 		: isQaImport(formValues)
@@ -662,7 +662,7 @@ export const getUploadHintText = (formValues: Pick<ImportFormValues, 'mode' | 'f
 						? ''
 			: uploadHintByMode[formValues.mode];
 
-export const getUploadAreaClassName = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const getUploadAreaClassName = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isDocumentImport(formValues)
 		? 'knowledge-import-route__uploader knowledge-import-route__uploader--document'
 		: isQaImport(formValues)
@@ -675,11 +675,11 @@ export const getUploadAreaClassName = (formValues: Pick<ImportFormValues, 'mode'
 						? 'knowledge-import-route__uploader knowledge-import-route__uploader--web'
 			: 'knowledge-import-route__uploader';
 
-export const getUploadTextVariant = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const getUploadTextVariant = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isDocumentImport(formValues)
-		? 'document'
+		? 'text'
 		: isQaImport(formValues)
-			? 'qa'
+			? 'table'
 			: isImageImport(formValues)
 				? 'image'
 				: isAudioImport(formValues)
@@ -688,11 +688,11 @@ export const getUploadTextVariant = (formValues: Pick<ImportFormValues, 'mode' |
 						? 'web'
 				: 'default';
 
-export const shouldShowQaTemplateDownloads = (formValues: Pick<ImportFormValues, 'mode' | 'fileType'>) =>
+export const shouldShowQaTemplateDownloads = (formValues: Pick<ImportFormValues, 'mode' | 'doc_category'>) =>
 	isQaImport(formValues);
 
 export const createUploadProps = (
-	formValues: Pick<ImportFormValues, 'mode' | 'fileType' | 'pendingFiles'>,
+	formValues: Pick<ImportFormValues, 'mode' | 'doc_category' | 'pendingFiles'>,
 	messageApi: MessageInstance,
 ): UploadProps => ({
 	multiple: true,
@@ -754,9 +754,9 @@ export const createInitialImportFormValues = (): ImportFormValues => ({
 	...DEFAULT_IMPORT_CONFIG,
 	pendingFiles: [],
 	webBatchFiles: [],
-	name: '',
+	knowledge_name: '',
 	description: '',
-	groupKey: 'group-2',
+	group_id: 'group-2',
 	embeddingModel: 'multilingual-embedding',
 	storageResource: 'shared',
 	selectedTags: [...DEFAULT_IMPORT_CONFIG.selectedTags],

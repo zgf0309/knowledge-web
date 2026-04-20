@@ -37,7 +37,7 @@ export interface TagFormValues {
 }
 
 export type ImportMode = 'byType' | 'byTemplate';
-export type ImportFileType = 'document' | 'qa' | 'web' | 'image' | 'audio';
+export type ImportFileType = 'text' | 'table' | 'web' | 'image' | 'audio';
 export type ImportSourceType = 'local' | 'bos';
 export type ImportTemplateType =
 	| 'lawDocument'
@@ -76,7 +76,7 @@ export interface WebImportItem {
 	parseStatus: WebParseStatus;
 }
 
-export type ImportSliceStrategy = 'default' | 'custom' | 'whole';
+export type ImportSliceStrategy = 'default' | 'custom' | 'whole' | 'page';
 export type ImportSliceIdentifier =
 	| 'page'
 	| 'customRegex'
@@ -95,7 +95,7 @@ export type ImportSliceRegexInclusionStrategy = 'prefix' | 'suffix' | 'discard';
 
 export interface ImportConfig {
 	mode: ImportMode;
-	fileType: ImportFileType;
+	doc_category: ImportFileType;
 	templateType: ImportTemplateType;
 	sourceType: ImportSourceType;
 	autoTagging: boolean;

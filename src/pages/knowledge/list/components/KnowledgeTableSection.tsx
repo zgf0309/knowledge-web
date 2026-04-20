@@ -46,7 +46,7 @@ const KnowledgeTableSection = ({
 				width: 260,
 				render: (_, record) => (
 					<Flex vertical gap={2} style={{ minWidth: 0 }}>
-						<Flex align="center" gap={8} style={{ minWidth: 0 }} onClick={() => navigate(`/knowledge/index`)}>
+						<Flex align="center" gap={8} style={{ minWidth: 0 }} onClick={() => navigate(`/knowledge/index`, { state: { knowledgeId: record.knowledge_id }} )}>
 							<span className="knowledge-base-list__name-icon">
 								<FileTextOutlined />
 							</span>

@@ -26,20 +26,20 @@ const renderRequiredLabel = (label: string) => (
 	</span>
 );
 
-const getFileTypeLabel = (fileType: ImportFormValues['fileType']) => {
-	if (fileType === 'qa') {
+const getFileTypeLabel = (doc_category: ImportFormValues['doc_category']) => {
+	if (doc_category === 'table') {
 		return '导入表格型知识数据';
 	}
 
-	if (fileType === 'web') {
+	if (doc_category === 'web') {
 		return '读取网页数据源';
 	}
 
-	if (fileType === 'image') {
+	if (doc_category === 'image') {
 		return '导入图片文件';
 	}
 
-	if (fileType === 'audio') {
+	if (doc_category === 'audio') {
 		return '导入音频文件';
 	}
 
@@ -147,7 +147,7 @@ const KnowledgeConfigDrawer = ({ open, record, onCancel, onSubmit }: KnowledgeCo
 									<Text className="knowledge-table-list__config-static-text">按文件类型导入</Text>
 								</LabeledRow>
 								<LabeledRow label={renderRequiredLabel('选择文件类型')}>
-									<Text className="knowledge-table-list__config-static-text">{getFileTypeLabel(formValues.fileType)}</Text>
+									<Text className="knowledge-table-list__config-static-text">{getFileTypeLabel(formValues.doc_category)}</Text>
 								</LabeledRow>
 								<LabeledRow label={renderRequiredLabel('导入来源')}>
 									<Text className="knowledge-table-list__config-static-text">{getSourceTypeLabel(formValues.sourceType)}</Text>
@@ -180,9 +180,9 @@ const KnowledgeConfigDrawer = ({ open, record, onCancel, onSubmit }: KnowledgeCo
 								</LabeledRow>
 							</Flex>
 						</ImportSection>
-						<ImportParserSection form={form} formValues={formValues} />
-						{formValues.fileType !== 'qa' && formValues.fileType !== 'image' ? (
-							<ImportSliceSection form={form} formValues={formValues} />
+						<ImportParserSection />
+						{formValues.doc_category !== 'table' && formValues.doc_category !== 'image' ? (
+							<ImportSliceSection />
 						) : null}
 					</Flex>
 				</Form>

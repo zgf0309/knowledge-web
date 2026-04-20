@@ -10,7 +10,6 @@ import {
 import type { ReactNode } from 'react';
 import {
 	IMPORT_BASIC_PARSER_CARD_OPTIONS,
-	IMPORT_QA_PARSER_CARD_OPTIONS,
 	IMPORT_DEEP_PARSER_OPTIONS,
 	IMPORT_FILE_TYPE_OPTIONS,
 	IMPORT_SOURCE_OPTIONS,
@@ -20,8 +19,8 @@ import type { ImportFileType, ImportSourceType } from '../types';
 import type { ImportCheckboxCardOption, ImportOverviewRow, ImportSelectionOption } from './types';
 
 const FILE_TYPE_ICON_MAP: Record<ImportFileType, ReactNode> = {
-	document: <FileTextOutlined />,
-	qa: <TableOutlined />,
+	text: <FileTextOutlined />,
+	table: <TableOutlined />,
 	web: <LinkOutlined />,
 	image: <FileImageOutlined />,
 	audio: <SoundOutlined />,

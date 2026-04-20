@@ -10,6 +10,7 @@ import { useNavigate } from '@umijs/max';
 import { Button, Flex, Input } from 'antd';
 
 interface KnowledgeToolbarProps {
+	knowledgeId: string;
 	searchKeyword: string;
 	onSearchChange: (value: string) => void;
 	onRefresh: () => void;
@@ -19,6 +20,7 @@ interface KnowledgeToolbarProps {
 }
 
 const KnowledgeToolbar = ({
+	knowledgeId,
 	searchKeyword,
 	onSearchChange,
 	onRefresh,
@@ -64,7 +66,7 @@ const KnowledgeToolbar = ({
 					type="primary"
 					icon={<UploadOutlined />}
 					onClick={() => {
-						navigate('/knowledge/import', { state: { type: 'import' } });
+						navigate('/knowledge/import', { state: { type: 'import', knowledgeId } });
 					}}
 				>
 					导入文件

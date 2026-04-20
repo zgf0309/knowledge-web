@@ -100,19 +100,19 @@ const getFormatByImportCondition = (fileName: string, config: ImportConfig): Fil
 		return DOCUMENT_FORMATS.has(detectedFormat) ? detectedFormat : 'pdf';
 	}
 
-	if (config.fileType === 'qa') {
+	if (config.doc_category === 'table') {
 		return QA_FORMATS.has(detectedFormat) ? detectedFormat : 'xlsx';
 	}
 
-	if (config.fileType === 'image') {
+	if (config.doc_category === 'image') {
 		return IMAGE_FORMATS.has(detectedFormat) ? detectedFormat : 'png';
 	}
 
-	if (config.fileType === 'audio') {
+	if (config.doc_category === 'audio') {
 		return AUDIO_FORMATS.has(detectedFormat) ? detectedFormat : 'mp3';
 	}
 
-	if (config.fileType === 'web') {
+	if (config.doc_category === 'web') {
 		return 'url';
 	}
 
@@ -124,11 +124,11 @@ const getStatusByImportCondition = (config: ImportConfig, seed: number): FileSta
 		return seed % 3 === 0 ? 'processing' : 'available';
 	}
 
-	if (config.mode === 'byType' && config.fileType === 'audio') {
+	if (config.mode === 'byType' && config.doc_category === 'audio') {
 		return seed % 2 === 0 ? 'processing' : 'available';
 	}
 
-	if (config.mode === 'byType' && config.fileType === 'web' && config.webUpdateFrequency !== 'manual') {
+	if (config.mode === 'byType' && config.doc_category === 'web' && config.webUpdateFrequency !== 'manual') {
 		return 'processing';
 	}
 
@@ -150,15 +150,15 @@ const getDataSizeByImportCondition = (
 		return Math.max(Math.round(base * 1.2), 280);
 	}
 
-	if (config.fileType === 'qa') {
+	if (config.doc_category === 'table') {
 		return Math.max(Math.round(base * 1.7), 380);
 	}
 
-	if (config.fileType === 'image') {
+	if (config.doc_category === 'image') {
 		return Math.max(Math.round(base * 0.7), 220);
 	}
 
-	if (config.fileType === 'audio') {
+	if (config.doc_category === 'audio') {
 		return Math.max(Math.round(base * 1.35), 260);
 	}
 
@@ -170,19 +170,19 @@ const getParserConfigLabel = (config: ImportConfig) => {
 		return TEMPLATE_PARSER_LABEL_MAP[config.templateType];
 	}
 
-	if (config.fileType === 'web') {
+	if (config.doc_category === 'web') {
 		return '网页内容解析';
 	}
 
-	if (config.fileType === 'qa') {
+	if (config.doc_category === 'table') {
 		return '表格问答解析';
 	}
 
-	if (config.fileType === 'image') {
+	if (config.doc_category === 'image') {
 		return config.parserOptions.ocr ? 'OCR 图像识别' : '图片手动解析';
 	}
 
-	if (config.fileType === 'audio') {
+	if (config.doc_category === 'audio') {
 		return '音频解析（ASR）';
 	}
 

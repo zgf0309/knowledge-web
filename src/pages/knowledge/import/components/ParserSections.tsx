@@ -3,6 +3,7 @@ import { Button, Checkbox, Flex, Form, Input, InputNumber, Popover, Radio, Selec
 import type { FormInstance } from 'antd/es/form';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { useImportContext } from '../context';
 import {
 	IMPORT_AUDIO_PARSER_CARD_OPTIONS,
 	IMPORT_IMAGE_PARSER_CARD_OPTIONS,
@@ -38,6 +39,11 @@ const CUSTOM_SLICE_IDENTIFIER_OPTIONS = [
 const CUSTOM_SLICE_REFERENCE_INFO_OPTIONS = [
 	{ label: '关联文件名', value: 'fileName' },
 	{ label: '关联标题及子标题', value: 'heading' },
+] as const;
+
+const DEFAULT_SLICE_REFERENCE_INFO_OPTIONS = [
+	{ label: '关联文件名', value: 'fileName' },
+	{ label: '关联标题及子标题', value: 'heading', disabled: true },
 ] as const;
 
 const WHOLE_SLICE_REFERENCE_INFO_OPTIONS = [
@@ -109,11 +115,6 @@ interface ImportParserSectionProps {
 	formValues: ImportFormValues;
 }
 
-interface ImportSliceSectionProps {
-	form: FormInstance<ImportFormValues>;
-	formValues: ImportFormValues;
-}
-
 interface SliceIdentifierSelectProps {
 	value?: ImportSliceIdentifier[];
 	onChange?: (value: ImportSliceIdentifier[]) => void;
@@ -127,7 +128,10 @@ interface SlicePanelRowProps {
 }
 
 interface SliceReferenceInfoFieldProps {
-	options: typeof CUSTOM_SLICE_REFERENCE_INFO_OPTIONS | typeof WHOLE_SLICE_REFERENCE_INFO_OPTIONS;
+	options:
+		| typeof CUSTOM_SLICE_REFERENCE_INFO_OPTIONS
+		| typeof DEFAULT_SLICE_REFERENCE_INFO_OPTIONS
+		| typeof WHOLE_SLICE_REFERENCE_INFO_OPTIONS;
 }
 
 interface CustomSlicePanelProps {
@@ -247,7 +251,7 @@ const SlicePanelRow = ({ label, tooltip, children, compact = false }: SlicePanel
 const SliceReferenceInfoField = ({ options }: SliceReferenceInfoFieldProps) => (
 	<Form.Item name="customSliceReferenceInfo" className="knowledge-import-route__form-item">
 		<Checkbox.Group
-			options={options}
+			options={[...options]}
 			className="knowledge-import-route__slice-checkbox-group"
 		/>
 	</Form.Item>
@@ -325,15 +329,56 @@ const CustomSlicePanel = ({ form, showCustomRegexFields }: CustomSlicePanelProps
 					max={25}
 					step={1}
 					controls
-					disabled={showCustomRegexFields}
 					suffix="%"
 					style={{ width: 352 }}
-					className={`knowledge-import-route__slice-input knowledge-import-route__slice-input--full${showCustomRegexFields ? ' knowledge-import-route__slice-input--disabled' : ''}`}
+					className="knowledge-import-route__slice-input knowledge-import-route__slice-input--full"
 				/>
 			</Form.Item>
 		</SlicePanelRow>
 		<SlicePanelRow label="关联信息" tooltip={sliceReferenceInfoTooltipContent}>
 			<SliceReferenceInfoField options={CUSTOM_SLICE_REFERENCE_INFO_OPTIONS} />
+		</SlicePanelRow>
+	</div>
+);
+
+const PageSlicePanel = () => (
+	<div className="knowledge-import-route__slice-panel">
+		<SlicePanelRow label="切片最大长度" tooltip={sliceMaxLengthTooltipContent}>
+			<Form.Item
+				name="customSliceMaxLength"
+				className="knowledge-import-route__form-item"
+				rules={[{ required: true, message: '请输入切片最大长度' }]}
+			>
+				<InputNumber min={100} max={10000} step={100} controls={false} className="knowledge-import-route__slice-input knowledge-import-route__slice-input--full" />
+			</Form.Item>
+		</SlicePanelRow>
+		<SlicePanelRow label="切片重叠最大字符数占比" tooltip={sliceOverlapTooltipContent}>
+			<Form.Item
+				name="customSliceOverlapRatio"
+				className="knowledge-import-route__form-item"
+				rules={[{ required: true, message: '请输入切片重叠占比' }]}
+			>
+				<InputNumber
+					min={0}
+					max={25}
+					step={1}
+					controls
+					suffix="%"
+					style={{ width: 352 }}
+					className="knowledge-import-route__slice-input knowledge-import-route__slice-input--full"
+				/>
+			</Form.Item>
+		</SlicePanelRow>
+		<SlicePanelRow label="关联信息" tooltip={sliceReferenceInfoTooltipContent}>
+			<SliceReferenceInfoField options={CUSTOM_SLICE_REFERENCE_INFO_OPTIONS} />
+		</SlicePanelRow>
+	</div>
+);
+
+const DefaultSlicePanel = () => (
+	<div className="knowledge-import-route__slice-panel knowledge-import-route__slice-panel--whole">
+		<SlicePanelRow label="关联信息" tooltip={sliceReferenceInfoTooltipContent} compact>
+			<SliceReferenceInfoField options={DEFAULT_SLICE_REFERENCE_INFO_OPTIONS} />
 		</SlicePanelRow>
 	</div>
 );
@@ -644,12 +689,14 @@ const DefaultParserSection = ({
 	</ImportSection>
 );
 
-export const ImportParserSection = ({ form, formValues }: ImportParserSectionProps) => {
+export const ImportParserSection = () => {
+	const { form, formValues } = useImportContext();
+
 	// QA 类型的解析配置与普通文档差异较大，单独拆分组件便于扩展。
-	const isQaFileType = formValues.mode === 'byType' && formValues.fileType === 'qa';
-	const isWebFileType = formValues.mode === 'byType' && formValues.fileType === 'web';
-	const isImageFileType = formValues.mode === 'byType' && formValues.fileType === 'image';
-	const isAudioFileType = formValues.mode === 'byType' && formValues.fileType === 'audio';
+	const isQaFileType = formValues.mode === 'byType' && formValues.doc_category === 'table';
+	const isWebFileType = formValues.mode === 'byType' && formValues.doc_category === 'web';
+	const isImageFileType = formValues.mode === 'byType' && formValues.doc_category === 'image';
+	const isAudioFileType = formValues.mode === 'byType' && formValues.doc_category === 'audio';
 
 	if (isQaFileType) {
 		return <QaParserSection />;
@@ -670,21 +717,31 @@ export const ImportParserSection = ({ form, formValues }: ImportParserSectionPro
 	return <DefaultParserSection form={form} formValues={formValues} />;
 };
 
-export const ImportSliceSection = ({ form, formValues }: ImportSliceSectionProps) => {
+export const ImportSliceSection = () => {
+	const { form, formValues } = useImportContext();
+
 	const customSliceIdentifiers = formValues.customSliceIdentifiers ?? [];
 	const showCustomRegexFields = customSliceIdentifiers.includes('customRegex');
+	const isDefaultSliceStrategy = formValues.sliceStrategy === 'default';
 	const isCustomSliceStrategy = formValues.sliceStrategy === 'custom';
+	const isPageSliceStrategy = formValues.sliceStrategy === 'page';
 	const isWholeSliceStrategy = formValues.sliceStrategy === 'whole';
 
 	useEffect(() => {
-		if (!showCustomRegexFields) {
+		if (!isDefaultSliceStrategy && !isWholeSliceStrategy) {
 			return;
 		}
 
-		if (form.getFieldValue('customSliceOverlapRatio') !== 0) {
-			form.setFieldValue('customSliceOverlapRatio', 0);
+		const currentReferenceInfo = form.getFieldValue('customSliceReferenceInfo') as ImportFormValues['customSliceReferenceInfo'] | undefined;
+		const shouldResetReferenceInfo =
+			!Array.isArray(currentReferenceInfo) ||
+			currentReferenceInfo.length !== 1 ||
+			currentReferenceInfo[0] !== 'fileName';
+
+		if (shouldResetReferenceInfo) {
+			form.setFieldValue('customSliceReferenceInfo', ['fileName']);
 		}
-	}, [form, showCustomRegexFields]);
+	}, [form, isDefaultSliceStrategy, isWholeSliceStrategy]);
 
 	return (
 	<ImportSection title="配置切片策略">
@@ -708,12 +765,22 @@ export const ImportSliceSection = ({ form, formValues }: ImportSliceSectionProps
 				</Form.Item>
 			</LabeledRow>
 			{isCustomSliceStrategy ? (
-				<LabeledRow>
+				<LabeledRow label="">
 					<CustomSlicePanel form={form} showCustomRegexFields={showCustomRegexFields} />
 				</LabeledRow>
 			) : null}
+			{isPageSliceStrategy ? (
+				<LabeledRow label="">
+					<PageSlicePanel />
+				</LabeledRow>
+			) : null}
+			{isDefaultSliceStrategy ? (
+				<LabeledRow label="">
+					<DefaultSlicePanel />
+				</LabeledRow>
+			) : null}
 			{isWholeSliceStrategy ? (
-				<LabeledRow>
+				<LabeledRow label="">
 					<WholeSlicePanel />
 				</LabeledRow>
 			) : null}

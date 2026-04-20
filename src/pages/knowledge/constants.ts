@@ -31,12 +31,12 @@ export const IMPORT_FILE_TYPE_OPTIONS: Array<{
 	description: string;
 }> = [
 	{
-		value: 'document',
+		value: 'text',
 		title: '导入文本文件数据',
 		description: '将基于上传的文本文件直接进行切分处理',
 	},
 	{
-		value: 'qa',
+		value: 'table',
 		title: '导入表格型知识数据',
 		description: '将表格类内容转成问答对，适合结构化文档和批量知识库',
 	},
@@ -283,11 +283,16 @@ export const IMPORT_SLICE_STRATEGY_OPTIONS: Array<{
 		title: '整文件切片',
 		description: '将整篇文档内容存入单一切片',
 	},
+	{
+		value: 'page',
+		title: '按页切片',
+		description: '将文档按页进行切片',
+	},
 ];
 
 export const DEFAULT_IMPORT_CONFIG: ImportConfig = {
 	mode: 'byType',
-	fileType: 'document',
+	doc_category: 'text',
 	templateType: 'structuredQa',
 	sourceType: 'local',
 	autoTagging: false,

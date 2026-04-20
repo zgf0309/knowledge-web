@@ -14,6 +14,7 @@ import {
 import { Button, Checkbox, Flex, Form, Input, Modal, Radio, Segmented, Select, Switch, Tooltip, Typography, Upload } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import type { MessageInstance } from 'antd/es/message/interface';
+import { useImportContext } from '../context';
 import type { ImportFormValues } from '../types';
 import {
 	WEB_BATCH_MODE_HINT,
@@ -46,12 +47,6 @@ const renderRequiredLabel = (label: string) => (
 		<span className="knowledge-import-route__required-mark">*</span>
 	</span>
 );
-
-interface ImportWebSourceFieldsProps {
-	form: FormInstance<ImportFormValues>;
-	formValues: ImportFormValues;
-	messageApi: MessageInstance;
-}
 
 interface WebSingleModePanelProps {
 	webUrls: ImportFormValues['webUrls'];
@@ -244,7 +239,7 @@ const WebBatchModePanel = ({
 					]}
 				>
 					<Upload {...webBatchUploadProps} showUploadList={false}>
-						<div className="knowledge-import-route__web-batch-file-card" role="button" tabIndex={0}>
+						<div className="knowledge-import-route__web-batch-file-card">
 							<span className="knowledge-import-route__web-batch-file-icon">
 								<FileTextOutlined />
 							</span>
@@ -342,11 +337,8 @@ const WebOptionalConfigFields = ({ formValues }: { formValues: ImportFormValues 
 	</>
 );
 
-export const ImportWebSourceFields = ({
-	form,
-	formValues,
-	messageApi,
-}: ImportWebSourceFieldsProps) => {
+export const ImportWebSourceFields = () => {
+	const { form, formValues, messageApi } = useImportContext();
 	const controller = useWebImportController({ form, formValues, messageApi });
 
 	return (

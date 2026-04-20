@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useNavigate, useLocation } from '@umijs/max';
 import dayjs from 'dayjs';
 import { Divider, Flex, Form, Modal, message } from 'antd';
 import type { Key } from 'react';
@@ -18,11 +18,13 @@ import type { ImportFormValues } from './import/types';
 import type { KnowledgeFileRecord, TagFormValues } from './types';
 import { consumeImportedRecords, getConfigDrawerParserLabel, getConfigDrawerSourceLabel, getUniqueTags } from './utils';
 import './index.less';
-import { queryKnowledgeList } from '@/services/knowledge/api';
+import { queryKnowledgeDocList } from '@/services/knowledge/api';
 import {StorageKeys, getLocalStorage } from '@/utils/storage';
 
 const KnowledgePage = () => {
 	const navigate = useNavigate();
+	const location = useLocation();
+	const knowledgeId = location.state as { knowledgeId: string } | undefined;
 	const [records, setRecords] = useState(INITIAL_RECORDS);
 	const [knowledgeUpdatedAt, setKnowledgeUpdatedAt] = useState(KNOWLEDGE_BASE.updatedAt);
 	const [searchKeyword, setSearchKeyword] = useState('');
@@ -40,14 +42,11 @@ const KnowledgePage = () => {
 
 const getKnowledgeList = async () => {
 	const userInfo:any = getLocalStorage(StorageKeys.CURRENT_USER);
-	const res: any = await queryKnowledgeList({
-		tenant_id: userInfo?.tenant_id || '',
-		user_id: '',
-		knowledge_name: '',
-		knowledge_id: '',
-		scope: undefined,
-		sort_field: undefined,
-		sort_order: undefined,
+	const res: any = await queryKnowledgeDocList({
+			tenant_id: userInfo?.tenant_id || '',
+			knowledge_id: knowledgeId?.knowledgeId || '',
+			document_name: '',
+			status: undefined,
 	});
 	console.log('====>', res);
 };
@@ -233,6 +232,7 @@ useEffect(() => {
 				<Divider className="knowledge-table-list__divider" />
 				<Flex vertical gap={20} className="knowledge-table-list__content">
 					<KnowledgeToolbar
+						knowledgeId={knowledgeId?.knowledgeId || ''}
 						searchKeyword={searchKeyword}
 						onSearchChange={handleSearchChange}
 						onRefresh={handleRefresh}
