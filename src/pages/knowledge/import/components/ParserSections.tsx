@@ -15,7 +15,8 @@ import {
 import type { ImportSliceIdentifier } from '../../types';
 import type { ImportFormValues } from '../types';
 import { FormOptionCards } from './FormOptionCards';
-import { ImportSection, LabeledRow } from './Scaffold';
+import { ImportSection } from './Scaffold/ImportSection';
+import { LabeledRow } from './Scaffold/LabeledRow';
 import { knowledgeGraphTooltipContent } from './VisualBlocks';
 import { basicParserCardOptions, deepParserCardOptions } from '../viewConfig';
 
@@ -689,9 +690,7 @@ const DefaultParserSection = ({
 	</ImportSection>
 );
 
-export const ImportParserSection = () => {
-	const { form, formValues } = useImportContext();
-
+export const ImportParserSectionWithForm = ({ form, formValues }: ImportParserSectionProps) => {
 	// QA 类型的解析配置与普通文档差异较大，单独拆分组件便于扩展。
 	const isQaFileType = formValues.mode === 'byType' && formValues.doc_category === 'table';
 	const isWebFileType = formValues.mode === 'byType' && formValues.doc_category === 'web';
@@ -717,9 +716,13 @@ export const ImportParserSection = () => {
 	return <DefaultParserSection form={form} formValues={formValues} />;
 };
 
-export const ImportSliceSection = () => {
+export const ImportParserSection = () => {
 	const { form, formValues } = useImportContext();
 
+	return <ImportParserSectionWithForm form={form} formValues={formValues} />;
+};
+
+export const ImportSliceSectionWithForm = ({ form, formValues }: ImportParserSectionProps) => {
 	const customSliceIdentifiers = formValues.customSliceIdentifiers ?? [];
 	const showCustomRegexFields = customSliceIdentifiers.includes('customRegex');
 	const isDefaultSliceStrategy = formValues.sliceStrategy === 'default';
@@ -793,4 +796,10 @@ export const ImportSliceSection = () => {
 		</Flex>
 	</ImportSection>
 );
+};
+
+export const ImportSliceSection = () => {
+	const { form, formValues } = useImportContext();
+
+	return <ImportSliceSectionWithForm form={form} formValues={formValues} />;
 };

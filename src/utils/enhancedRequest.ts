@@ -46,7 +46,6 @@ const markAutoLogoutTriggered = (): void => {
 const getStoredAccessToken = (): string => {
 	try {
 		const accessToken = getLocalStorage<string>(`${StorageKeys.ACCESS_TOKEN}`);
-		console.log('accessToken=====>', accessToken);
 		return typeof accessToken === 'string' ? accessToken : '';
 	} catch (error) {
 		console.warn('Failed to get stored access token:', error);
@@ -83,8 +82,9 @@ const normalizeResponse = <T>(response: API.ApiResponse<T>): API.ApiResponse<T> 
 };
 
 const createRequestOptions = (options: EnhancedRequestOptions): RequestOptions => {
+	const isFormDataRequest = typeof FormData !== 'undefined' && options.data instanceof FormData;
 	const headers: Record<string, HeaderValue> = {
-		'Content-Type': 'application/json',
+		...(isFormDataRequest ? {} : { 'Content-Type': 'application/json' }),
 		...(options.headers as Record<string, HeaderValue> | undefined),
 	};
 	const accessToken = getStoredAccessToken();

@@ -28,7 +28,7 @@ import {
 	isValidWebUrl,
 } from '../formConfig';
 import { useWebImportController } from '../hooks/useWebImportController';
-import { LabeledRow } from './Scaffold';
+import { LabeledRow } from './Scaffold/LabeledRow';
 
 const { Text } = Typography;
 

@@ -3,13 +3,21 @@ import type { ReactNode } from 'react';
 import type { ImportConfig, ImportFileType } from '../types';
 
 export interface ImportFormValues extends ImportConfig {
+	// 租户 ID（提交时由上下文注入）。
 	tenant_id?: string;
+	// 待上传的本地文件列表。
 	pendingFiles: UploadFile[];
+	// 网页批量导入模式下上传的 Excel 文件。
 	webBatchFiles: UploadFile[];
+	// 知识库名称。
 	knowledge_name: string;
+	// 知识库备注。
 	description?: string;
+	// 向量模型标识。
 	embeddingModel: string;
+	// 所属群组 ID。
 	group_id: string;
+	// 存储资源类型。
 	storageResource: 'shared' | 'bes' | 'vectorDb';
 }
 

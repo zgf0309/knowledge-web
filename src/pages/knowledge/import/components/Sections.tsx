@@ -8,7 +8,9 @@ import {
 	knowledgeDefinitionRows,
 } from '../viewConfig';
 import { ImportParserSection, ImportSliceSection } from './ParserSections';
-import { ImportSection, LabeledRow, SelectionCardGroup } from './Scaffold';
+import { ImportSection } from './Scaffold/ImportSection';
+import { LabeledRow } from './Scaffold/LabeledRow';
+import { SelectionCardGroup } from './Scaffold/SelectionCardGroup';
 import { ImportWebSourceFields } from './WebImportFields';
 import {
 	AddOverviewDescriptionField,

@@ -30,7 +30,8 @@ import {
 } from '../../formConfig';
 import type { EmbeddingModelOption, ImportFormValues, ImportOverviewRow } from '../../types';
 import { sourceSelectionOptions } from '../../viewConfig';
-import { LabeledRow, SelectionCardGroup } from '../Scaffold';
+import { LabeledRow } from '../Scaffold/LabeledRow';
+import { SelectionCardGroup } from '../Scaffold/SelectionCardGroup';
 import { TemplatePreview, templateDescriptions } from '../VisualBlocks';
 
 const { Dragger } = Upload;

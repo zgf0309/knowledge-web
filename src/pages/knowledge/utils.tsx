@@ -7,14 +7,12 @@ import {
 	FileTextOutlined,
 	FileWordOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import type { ReactNode } from 'react';
 import type { UploadFile } from 'antd';
 import type {
 	FileFormat,
 	FileStatus,
 	ImportConfig,
-	ImportTemplateType,
 	KnowledgeFileRecord,
 	WebImportItem,
 } from './types';
@@ -81,15 +79,6 @@ const QA_FORMATS = new Set<FileFormat>(['xlsx', 'xls', 'csv', 'json']);
 const IMAGE_FORMATS = new Set<FileFormat>(['png', 'jpg', 'jpeg', 'gif', 'bmp']);
 const AUDIO_FORMATS = new Set<FileFormat>(['wav', 'mp3', 'pcm', 'm4a', 'amr']);
 
-const TEMPLATE_PARSER_LABEL_MAP: Record<ImportTemplateType, string> = {
-	lawDocument: '模板解析（法律文书）',
-	contractTemplate: '模板解析（合同范本）',
-	resume: '模板解析（简历文档）',
-	ppt: '模板解析（PPT 幻灯片）',
-	paper: '模板解析（论文文档）',
-	structuredQa: '模板解析（结构化问答对）',
-};
-
 const getSeedFromText = (input: string) =>
 	Array.from(input).reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
@@ -135,81 +124,6 @@ const getStatusByImportCondition = (config: ImportConfig, seed: number): FileSta
 	return 'available';
 };
 
-const getDataSizeByImportCondition = (
-	originalSize: number,
-	config: ImportConfig,
-	format: FileFormat,
-) => {
-	const base = Math.max(Math.round(originalSize / 3), 200);
-
-	if (format === 'url') {
-		return Math.max(base, 240);
-	}
-
-	if (config.mode === 'byTemplate') {
-		return Math.max(Math.round(base * 1.2), 280);
-	}
-
-	if (config.doc_category === 'table') {
-		return Math.max(Math.round(base * 1.7), 380);
-	}
-
-	if (config.doc_category === 'image') {
-		return Math.max(Math.round(base * 0.7), 220);
-	}
-
-	if (config.doc_category === 'audio') {
-		return Math.max(Math.round(base * 1.35), 260);
-	}
-
-	return base;
-};
-
-const getParserConfigLabel = (config: ImportConfig) => {
-	if (config.mode === 'byTemplate') {
-		return TEMPLATE_PARSER_LABEL_MAP[config.templateType];
-	}
-
-	if (config.doc_category === 'web') {
-		return '网页内容解析';
-	}
-
-	if (config.doc_category === 'table') {
-		return '表格问答解析';
-	}
-
-	if (config.doc_category === 'image') {
-		return config.parserOptions.ocr ? 'OCR 图像识别' : '图片手动解析';
-	}
-
-	if (config.doc_category === 'audio') {
-		return '音频解析（ASR）';
-	}
-
-	if (
-		config.advancedParsing &&
-		(config.deepParserOptions.vlm ||
-			config.deepParserOptions.tableParsing ||
-			config.deepParserOptions.formulaParsing)
-	) {
-		return '高级解析策略';
-	}
-
-	if (config.parserOptions.ocr && config.parserOptions.layoutAnalysis) {
-		return 'OCR + 版面分析';
-	}
-
-	if (config.parserOptions.ocr) {
-		return 'OCR 增强识别';
-	}
-
-	if (config.parserOptions.layoutAnalysis) {
-		return '表格增强解析';
-	}
-
-	return '默认分片策略';
-};
-
 const getAutoTags = (config: ImportConfig) => {
 	const tags: string[] = [];
 
@@ -235,15 +149,12 @@ const getAutoTags = (config: ImportConfig) => {
 const getSourceTypeLabel = (sourceType: ImportConfig['sourceType']) =>
 	sourceType === 'bos' ? '百度对象存储（BOS）' : '本地上传';
 
-const getUploaderLabel = (sourceType: ImportConfig['sourceType']) =>
-	sourceType === 'bos' ? 'BOS 同步任务' : '当前用户';
-
-export const createConfigDrawerInitialValues = (record?: Pick<KnowledgeFileRecord, 'sourceType' | 'tags'>): ImportFormValues => {
+export const createConfigDrawerInitialValues = (record?: Pick<KnowledgeFileRecord, 'source_type' | 'tags'>): ImportFormValues => {
 	const initialValues = createInitialImportFormValues();
 
 	return {
 		...initialValues,
-		sourceType: record?.sourceType === '百度对象存储（BOS）' ? 'bos' : 'local',
+		sourceType: record?.source_type === 'bos' ? 'bos' : 'local',
 		autoTagging: Boolean(record?.tags?.length),
 		selectedTags: record?.tags ?? [],
 	};
@@ -289,27 +200,37 @@ export const createRecordFromUpload = (
 	config: ImportConfig,
 ): KnowledgeFileRecord => {
 	const size = file.originFileObj?.size ?? file.size ?? 4096;
-	const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+	const now = Date.now();
 	const tags = getAutoTags(config);
 	const seed = getSeedFromText(file.uid || file.name);
 	const format = getFormatByImportCondition(file.name, config);
+	const docType = format === 'url' ? 'web' : config.doc_category;
 
 	return {
-		key: file.uid,
-		id:
-			typeof crypto !== 'undefined' && 'randomUUID' in crypto
-				? crypto.randomUUID()
-				: `${Date.now()}-${file.uid}`,
-		name: file.name,
-		status: getStatusByImportCondition(config, seed),
-		dataSize: getDataSizeByImportCondition(size, config, format),
-		format,
+		document_id: file.uid || `${Date.now()}`,
+		knowledge_id: '',
+		tenant_id: '',
+		doc_name: file.name,
+		doc_type: docType,
+		location: '',
+		doc_size: size,
+		doc_category: config.doc_category,
+		template_type: config.mode === 'byTemplate' ? config.templateType : null,
 		tags,
-		uploader: getUploaderLabel(config.sourceType),
-		uploadedAt: now,
-		updatedAt: now,
-		parserConfig: getParserConfigLabel(config),
-		sourceType: getSourceTypeLabel(config.sourceType),
+		parser_id: 'naive',
+		parser_config: {},
+		chunk_count: 0,
+		token_num: 0,
+		progress: 0,
+		progress_msg: '',
+		status: getStatusByImportCondition(config, seed),
+		run: 0,
+		content_hash: null,
+		doc_metadata: {},
+		source_type: config.sourceType,
+		source_url: null,
+		create_time: now,
+		update_time: now,
 	};
 };
 
@@ -317,7 +238,7 @@ export const createRecordFromWebUrl = (
 	item: WebImportItem,
 	config: ImportConfig,
 ): KnowledgeFileRecord => {
-	const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+	const now = Date.now();
 	const tags = getAutoTags(config);
 	const seed = getSeedFromText(item.id || item.url);
 	let hostName = item.url;
@@ -329,21 +250,30 @@ export const createRecordFromWebUrl = (
 	}
 
 	return {
-		key: item.id,
-		id:
-			typeof crypto !== 'undefined' && 'randomUUID' in crypto
-				? crypto.randomUUID()
-				: `${Date.now()}-${item.id}`,
-		name: hostName,
-		status: getStatusByImportCondition(config, seed),
-		dataSize: Math.max(item.url.length * 10, 200),
-		format: 'url',
+		document_id: item.id || `${Date.now()}`,
+		knowledge_id: '',
+		tenant_id: '',
+		doc_name: hostName,
+		doc_type: 'web',
+		location: item.url,
+		doc_size: Math.max(item.url.length * 10, 200),
+		doc_category: 'web',
+		template_type: null,
 		tags,
-		uploader: config.webUploadMode === 'batch' ? '批量 URL 导入' : '当前用户',
-		uploadedAt: now,
-		updatedAt: now,
-		parserConfig: getParserConfigLabel(config),
-		sourceType: config.webUploadMode === 'batch' ? '网页链接（批量）' : '网页链接（逐个）',
+		parser_id: 'naive',
+		parser_config: {},
+		chunk_count: 0,
+		token_num: 0,
+		progress: 0,
+		progress_msg: '',
+		status: getStatusByImportCondition(config, seed),
+		run: 0,
+		content_hash: null,
+		doc_metadata: {},
+		source_type: 'local',
+		source_url: item.url,
+		create_time: now,
+		update_time: now,
 	};
 };
 
@@ -353,7 +283,7 @@ export const getStatusLabel = (status: FileStatus) =>
 export const getUniqueTags = (records: KnowledgeFileRecord[], keys: string[]) =>
 	Array.from(
 		new Set(
-			records.filter((record) => keys.includes(record.key)).flatMap((record) => record.tags),
+			records.filter((record) => keys.includes(record.document_id)).flatMap((record) => record.tags),
 		),
 	);
 

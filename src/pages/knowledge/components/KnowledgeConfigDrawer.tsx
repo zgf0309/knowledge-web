@@ -2,8 +2,9 @@ import { CheckCircleFilled } from '@ant-design/icons';
 import { Alert, Button, Drawer, Flex, Form, Segmented, Select, Switch, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import type { ImportFormValues } from '../import/types';
-import { ImportParserSection, ImportSliceSection } from '../import/components/Sections';
-import { ImportSection, LabeledRow } from '../import/components/Scaffold';
+import { ImportParserSectionWithForm, ImportSliceSectionWithForm } from '../import/components/ParserSections';
+import { ImportSection } from '../import/components/Scaffold/ImportSection';
+import { LabeledRow } from '../import/components/Scaffold/LabeledRow';
 import { TAG_OPTIONS } from '../constants';
 import type { KnowledgeFileRecord } from '../types';
 import { createConfigDrawerInitialValues } from '../utils';
@@ -180,9 +181,9 @@ const KnowledgeConfigDrawer = ({ open, record, onCancel, onSubmit }: KnowledgeCo
 								</LabeledRow>
 							</Flex>
 						</ImportSection>
-						<ImportParserSection />
+						<ImportParserSectionWithForm form={form} formValues={formValues} />
 						{formValues.doc_category !== 'table' && formValues.doc_category !== 'image' ? (
-							<ImportSliceSection />
+							<ImportSliceSectionWithForm form={form} formValues={formValues} />
 						) : null}
 					</Flex>
 				</Form>

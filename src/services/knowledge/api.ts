@@ -161,6 +161,25 @@ export async function addKnowledgeList(
   });
 }
 
+export async function delKnowledgeList(
+  params: {
+    // query
+    /** tenant_id */
+    tenant_id?: string;
+    /** knowledge_id */
+    knowledge_id?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>(`/knowledge-api/api/v1/ai/knowledge`, {
+    method: 'DELETE',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 export async function queryKnowledgeDocList(
   params: {
     // query
@@ -209,6 +228,27 @@ export async function addKnowledgeDoc(
     ...(options || {}),
   });
 }
+
+export async function addKnowledgeDocTemplate(
+  params: {
+    /** tenant_id */
+    tenant_id?: string;
+    /** knowledge_id */
+    knowledge_id: string;
+    /** documents */
+    documents: Array<Record<string, any>>;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/import-template', {
+    method: 'POST',
+    data: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
 
 export async function queryEmbeddingModels(
   params?: { [key: string]: any },

@@ -19,7 +19,7 @@ import type {
 	KnowledgeGroup,
 } from './list/types';
 import './list.less';
-import {queryKnowledgeList} from '@/services/knowledge/api';
+import {queryKnowledgeList, delKnowledgeList} from '@/services/knowledge/api';
 import { getLocalStorage, StorageKeys } from '@/utils/storage';
 import { useQuery } from '@tanstack/react-query';
 
@@ -48,7 +48,7 @@ const KnowledgeListPage = () => {
 	const [modal, modalContextHolder] = Modal.useModal();
 
 	// 知识库列表数据
-	const { data: knowledgeList, isLoading } = useQuery({
+	const { data: knowledgeList, isLoading, refetch} = useQuery({
 		queryKey: ['KnowledgeList', pagination, searchKeyword, selectedGroupKey],
 		queryFn: () =>
 			queryKnowledgeList({
@@ -122,6 +122,7 @@ const KnowledgeListPage = () => {
 	};
 	// 删除知识库
 	const handleDelete = (keys: string[]) => {
+		console.log('要删除的知识库 ID 列表', keys);
 		if (!keys.length) {
 			messageApi.warning('请先选择要删除的知识库');
 			return;
@@ -133,8 +134,16 @@ const KnowledgeListPage = () => {
 			okText: '确认删除',
 			cancelText: '取消',
 			okButtonProps: { danger: true },
-			onOk: () => {
-				messageApi.success('删除成功');
+			onOk: async () => {
+
+				const res: any = await delKnowledgeList({ knowledge_id: keys[0], tenant_id: current_user?.tenant_id, });
+				if (res?.code === 200) {
+					setSelectedRowKeys([]);
+					refetch();
+					messageApi.success('删除成功');
+				} else {
+					messageApi.error(res?.msg || '删除失败，请稍后重试');
+				}
 			},
 		});
 	};

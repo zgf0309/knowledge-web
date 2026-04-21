@@ -2,7 +2,8 @@ import { PageContainer } from '@ant-design/pro-components';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Flex, Form, Typography } from 'antd';
 import { ImportContextProvider, useImportContext } from './context';
-import { ImportFooter, ImportPageHeader } from './components/Scaffold';
+import { ImportFooter } from './components/Scaffold/ImportFooter';
+import { ImportPageHeader } from './components/Scaffold/ImportPageHeader';
 import {
 	ImportOverviewStep,
 	ImportParserSection,
@@ -10,6 +11,7 @@ import {
 	ImportSourceSection,
 	validateAddOverviewStep,
 } from './components/Sections';
+import { submitImportForm } from './context/submitImportForm';
 import type { ImportFormValues } from './types';
 import './index.less';
 
@@ -21,13 +23,26 @@ const KnowledgeImportPageContent = () => {
 		currentStep,
 		setCurrentStep,
 		messageContextHolder,
+		messageApi,
+		currentUser,
+		targetKnowledgeId,
+		goToTargetKnowledge,
 		form,
 		initialFormValues,
 		formValues,
-		handleSubmit,
 		goBack,
 		goToKnowledgeList,
 	} = useImportContext();
+
+	const handleSubmit = async () => {
+		await submitImportForm({
+			form,
+			targetKnowledgeId,
+			currentUser,
+			messageApi,
+			goToTargetKnowledge,
+		});
+	};
 
 	return (
 		<PageContainer

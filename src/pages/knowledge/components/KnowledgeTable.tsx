@@ -3,9 +3,11 @@ import { Button, Flex, Pagination, Space, Table, Tag, Tooltip } from 'antd';
 import type { TableColumnsType } from 'antd';
 import type { Key } from 'react';
 import type { KnowledgeFileRecord } from '../types';
-import { getFormatIcon } from '../utils';
+import { getFormatFromName, getFormatIcon } from '../utils';
+import Loading from '../list/components/Loading';
 
 interface KnowledgeTableProps {
+	isLoading: boolean;
 	records: KnowledgeFileRecord[];
 	selectedRowKeys: Key[];
 	currentPage: number;
@@ -20,6 +22,7 @@ interface KnowledgeTableProps {
 }
 
 const KnowledgeTable = ({
+	isLoading,
 	records,
 	selectedRowKeys,
 	currentPage,
@@ -32,15 +35,23 @@ const KnowledgeTable = ({
 	onOpenConfigModal,
 	onDelete,
 }: KnowledgeTableProps) => {
+	const getRecordFormat = (record: KnowledgeFileRecord) => {
+		if (record.doc_type === 'web') {
+			return 'url' as const;
+		}
+
+		return getFormatFromName(record.doc_name);
+	};
+
 	const columns: TableColumnsType<KnowledgeFileRecord> = [
 		{
 			title: '文件名称/ID',
-			dataIndex: 'name',
-			key: 'name',
+			dataIndex: 'doc_name',
+			key: 'doc_name',
 			width: 320,
 			render: (_, record) => (
 				<div className="knowledge-table-list__file-cell">
-					<span className="knowledge-table-list__file-icon">{getFormatIcon(record.format)}</span>
+					<span className="knowledge-table-list__file-icon">{getFormatIcon(getRecordFormat(record))}</span>
 					<div className="knowledge-table-list__file-info">
 						<span
 							className="knowledge-table-list__file-name"
@@ -48,9 +59,9 @@ const KnowledgeTable = ({
 									onOpenDocument(record);
 							}}
 						>
-							{record.name}
+							{record.doc_name}
 						</span>
-						<span className="knowledge-table-list__sub-text">{record.id}</span>
+						<span className="knowledge-table-list__sub-text">{record.document_id}</span>
 					</div>
 				</div>
 			),
@@ -63,16 +74,16 @@ const KnowledgeTable = ({
 			render: (_, record) => (
 				<span className="knowledge-table-list__status">
 					<span className="knowledge-table-list__status-dot" />
-					{record.status === 'available' ? '可用' : '处理中'}
+					{record.status === 'success' ? '可用' : '处理中'}
 				</span>
 			),
 		},
 		{
 			title: '数据量',
-			dataIndex: 'dataSize',
-			key: 'dataSize',
+			dataIndex: 'doc_size',
+			key: 'doc_size',
 			width: 132,
-			render: (value) => `${value}字符`,
+			render: (value) => `${Number(value || 0).toLocaleString()}字节`,
 		},
 		{
 			title: (
@@ -85,17 +96,17 @@ const KnowledgeTable = ({
 			),
 			key: 'advancedUsage',
 			width: 156,
-			render: (_, record) => (
+			render: () => (
 				<div className="knowledge-table-list__stacked-text">
-					<span>累计 {record.advancedUsageTotal ?? '-'}</span>
-					<span>最新 {record.advancedUsageLatest ?? '-'}</span>
+					<span>累计 -</span>
+					<span>最新 -</span>
 				</div>
 			),
 		},
 		{
 			title: '文件格式',
-			dataIndex: 'format',
-			key: 'format',
+			dataIndex: 'doc_type',
+			key: 'doc_type',
 			width: 104,
 		},
 		{
@@ -125,7 +136,7 @@ const KnowledgeTable = ({
 						type="link"
 						icon={<EditOutlined />}
 						onClick={() => {
-							onOpenTagModal([record.key], record.tags);
+							onOpenTagModal([record.document_id], record.tags);
 						}}
 					/>
 				</div>
@@ -133,10 +144,10 @@ const KnowledgeTable = ({
 		},
 		{
 			title: '上传时间',
-			dataIndex: 'uploadedAt',
-			key: 'uploadedAt',
+			dataIndex: 'create_time',
+			key: 'create_time',
 			width: 176,
-			render: (_, record) => <span className="knowledge-table-list__sub-text">{record.uploadedAt}</span>,
+			render: (_, record) => <span className="knowledge-table-list__sub-text">{record.create_time ? new Date(record.create_time).toLocaleString() : '-'}</span>,
 		},
 		{
 			title: '操作',
@@ -157,7 +168,7 @@ const KnowledgeTable = ({
 						danger
 						type="link"
 						onClick={() => {
-							onDelete([record.key]);
+							onDelete([record.document_id]);
 						}}
 					>
 						删除
@@ -169,17 +180,25 @@ const KnowledgeTable = ({
 
 	return (
 		<Flex vertical className="knowledge-table-list__table-wrapper">
-			<Table<KnowledgeFileRecord>
-				rowKey="key"
-				columns={columns}
-				dataSource={records}
-				pagination={false}
-				rowSelection={{
-					selectedRowKeys,
-					onChange: onSelectionChange,
-				}}
-				scroll={{ x: 1320 }}
-			/>
+			<Flex>
+				{isLoading ? (
+					<Flex justify='center' align='center' style={{ width: '100%', height: 100 }}>
+						<Loading />
+					</Flex>
+				) : (
+					<Table<KnowledgeFileRecord>
+						rowKey="document_id"
+						columns={columns}
+						dataSource={records}
+						pagination={false}
+						rowSelection={{
+							selectedRowKeys,
+							onChange: onSelectionChange,
+						}}
+						scroll={{ x: 1320 }}
+					/>
+				)}
+			</Flex>
 			<Flex justify="flex-end" className="knowledge-table-list__pagination">
 				<Pagination
 					size="small"

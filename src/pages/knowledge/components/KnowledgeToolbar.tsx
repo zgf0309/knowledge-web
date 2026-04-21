@@ -1,9 +1,6 @@
 import {
 	BookOutlined,
-	DeleteOutlined,
-	QuestionCircleOutlined,
 	ReloadOutlined,
-	TagsOutlined,
 	UploadOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
@@ -14,9 +11,6 @@ interface KnowledgeToolbarProps {
 	searchKeyword: string;
 	onSearchChange: (value: string) => void;
 	onRefresh: () => void;
-	onOpenBatchConfig: () => void;
-	onDeleteSelected: () => void;
-	onOpenTagModal: () => void;
 }
 
 const KnowledgeToolbar = ({
@@ -24,9 +18,6 @@ const KnowledgeToolbar = ({
 	searchKeyword,
 	onSearchChange,
 	onRefresh,
-	onOpenBatchConfig,
-	onDeleteSelected,
-	onOpenTagModal,
 }: KnowledgeToolbarProps) => {
 	const navigate = useNavigate();
 
@@ -52,15 +43,6 @@ const KnowledgeToolbar = ({
 					}}
 				>
 					知识图谱
-				</Button>
-				<Button icon={<QuestionCircleOutlined />} onClick={onOpenBatchConfig}>
-					批量修改配置
-				</Button>
-				<Button danger icon={<DeleteOutlined />} onClick={onDeleteSelected}>
-					批量删除
-				</Button>
-				<Button icon={<TagsOutlined />} onClick={onOpenTagModal}>
-					标签管理
 				</Button>
 				<Button
 					type="primary"

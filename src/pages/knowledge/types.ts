@@ -1,7 +1,7 @@
 import type { UploadFile } from 'antd';
 
 export type FileFormat = 'pdf' | 'doc' | 'docx' | 'ppt' | 'pptx' | 'xls' | 'xlsx' | 'csv' | 'json' | 'md' | 'txt' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp' | 'wav' | 'mp3' | 'pcm' | 'm4a' | 'amr' | 'url';
-export type FileStatus = 'available' | 'processing';
+export type FileStatus = 'pending' | 'running' | 'success' | 'failed' | 'available' | 'processing';
 
 export interface KnowledgeBaseInfo {
 	id: string;
@@ -12,20 +12,30 @@ export interface KnowledgeBaseInfo {
 }
 
 export interface KnowledgeFileRecord {
-	key: string;
-	id: string;
-	name: string;
+	chunk_count: number;
+	content_hash: string | null;
+	create_time: number;
+	doc_category: string;
+	doc_metadata: Record<string, any>;
+	doc_name: string;
+	doc_size: number;
+	doc_type: string;
+	document_id: string;
+	knowledge_id: string;
+	location: string;
+	parser_config: Record<string, any>;
+	parser_id: string;
+	progress: number;
+	progress_msg: string;
+	run: number;
+	source_type: string;
+	source_url: string | null;
 	status: FileStatus;
-	dataSize: number;
-	advancedUsageTotal?: number;
-	advancedUsageLatest?: number;
-	format: FileFormat;
 	tags: string[];
-	uploader: string;
-	uploadedAt: string;
-	updatedAt: string;
-	parserConfig: string;
-	sourceType: string;
+	template_type: string | null;
+	tenant_id: string;
+	token_num: number;
+	update_time: number;
 }
 
 export interface BatchConfigValues {

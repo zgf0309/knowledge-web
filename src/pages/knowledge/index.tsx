@@ -3,10 +3,8 @@ import { useNavigate, useLocation } from '@umijs/max';
 import dayjs from 'dayjs';
 import { Divider, Flex, Form, Modal, message } from 'antd';
 import type { Key } from 'react';
-import { startTransition, useDeferredValue, useEffect, useState } from 'react';
+import { startTransition, useMemo, useState } from 'react';
 import {
-	INITIAL_RECORDS,
-	KNOWLEDGE_BASE,
 	TAG_OPTIONS,
 } from './constants';
 import KnowledgeConfigDrawer from './components/KnowledgeConfigDrawer';
@@ -15,20 +13,19 @@ import KnowledgeTable from './components/KnowledgeTable';
 import KnowledgeTagModal from './components/KnowledgeTagModal';
 import KnowledgeToolbar from './components/KnowledgeToolbar';
 import type { ImportFormValues } from './import/types';
-import type { KnowledgeFileRecord, TagFormValues } from './types';
-import { consumeImportedRecords, getConfigDrawerParserLabel, getConfigDrawerSourceLabel, getUniqueTags } from './utils';
+import type { KnowledgeBaseInfo, KnowledgeFileRecord, TagFormValues } from './types';
+import { getUniqueTags } from './utils';
 import './index.less';
 import { queryKnowledgeDocList } from '@/services/knowledge/api';
 import {StorageKeys, getLocalStorage } from '@/utils/storage';
+import { useQuery } from '@tanstack/react-query';
 
 const KnowledgePage = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const knowledgeId = location.state as { knowledgeId: string } | undefined;
-	const [records, setRecords] = useState(INITIAL_RECORDS);
-	const [knowledgeUpdatedAt, setKnowledgeUpdatedAt] = useState(KNOWLEDGE_BASE.updatedAt);
+	const locationState = location.state as { knowledgeId?: string; knowledgeName?: string } | undefined;
+	const knowledgeId = locationState?.knowledgeId;
 	const [searchKeyword, setSearchKeyword] = useState('');
-	const deferredSearchKeyword = useDeferredValue(searchKeyword);
 	const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
 	const [configDrawerRecord, setConfigDrawerRecord] = useState<KnowledgeFileRecord | null>(null);
 	const [tagModalOpen, setTagModalOpen] = useState(false);
@@ -38,53 +35,42 @@ const KnowledgePage = () => {
 	const [tagForm] = Form.useForm<TagFormValues>();
 	const [messageApi, messageContextHolder] = message.useMessage();
 	const [modal, modalContextHolder] = Modal.useModal();
-
-
-const getKnowledgeList = async () => {
 	const userInfo:any = getLocalStorage(StorageKeys.CURRENT_USER);
-	const res: any = await queryKnowledgeDocList({
-			tenant_id: userInfo?.tenant_id || '',
-			knowledge_id: knowledgeId?.knowledgeId || '',
-			document_name: '',
-			status: undefined,
-	});
-	console.log('====>', res);
-};
-useEffect(() => {
-	getKnowledgeList();
-}, []);
-	useEffect(() => {
-		const importedRecords = consumeImportedRecords();
-		if (!importedRecords.length) {
-			return;
-		}
-
-		setRecords((currentRecords) => [...importedRecords, ...currentRecords]);
-		setKnowledgeUpdatedAt(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-		setPagination((current) => ({
-			...current,
-			current: 1,
-		}));
-		messageApi.success(`已导入 ${importedRecords.length} 个文件`);
-	}, [messageApi]);
-
-	const filteredRecords = records.filter((record) => {
-		const keyword = deferredSearchKeyword.trim().toLowerCase();
-		if (!keyword) {
-			return true;
-		}
-
-		return [record.name, record.id, record.uploader].some((value) =>
-			value.toLowerCase().includes(keyword),
-		);
+	const { data: knowledgeDocList, isLoading, refetch} = useQuery({
+		queryKey: ['KnowledgeDocList', pagination, searchKeyword, knowledgeId],
+		queryFn: () =>
+			queryKnowledgeDocList({
+				tenant_id: userInfo?.tenant_id || '',
+				knowledge_id: knowledgeId || '',
+				document_name: searchKeyword,
+				status: undefined,
+				page_num: pagination.current,
+				page_size: pagination.pageSize,
+			}),
+		select: (s: any) => s.data,
 	});
 
-	const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pagination.pageSize));
-	const currentPage = Math.min(pagination.current, totalPages);
-	const pagedRecords = filteredRecords.slice(
-		(currentPage - 1) * pagination.pageSize,
-		currentPage * pagination.pageSize,
-	);
+	const records = useMemo<KnowledgeFileRecord[]>(() => (knowledgeDocList?.list as KnowledgeFileRecord[] | undefined) ?? [], [knowledgeDocList?.list]);
+	const knowledgeUpdatedAt = useMemo(() => {
+		if (!records.length) {
+			return '-';
+		}
+
+		const latestUpdateTime = Math.max(...records.map((item) => Number(item.update_time || 0)));
+		if (!latestUpdateTime) {
+			return '-';
+		}
+
+		return dayjs(latestUpdateTime).format('YYYY-MM-DD HH:mm:ss');
+	}, [records]);
+
+	const knowledgeBase = useMemo<KnowledgeBaseInfo>(() => ({
+		id: knowledgeId || '',
+		name: locationState?.knowledgeName || '知识库文档列表',
+		sourceType: '共享资源',
+		updatedAt: knowledgeUpdatedAt,
+		description: `文档数量：${knowledgeDocList?.total || 0}`,
+	}), [knowledgeDocList?.total, knowledgeId, knowledgeUpdatedAt, locationState?.knowledgeName]);
 
 	const closeConfigDrawer = () => {
 		setConfigDrawerRecord(null);
@@ -95,19 +81,6 @@ useEffect(() => {
 		setTagModalOpen(false);
 		setTagTargetKeys([]);
 		tagForm.resetFields();
-	};
-
-	const removeRecords = (keys: string[]) => {
-		setRecords((currentRecords) => currentRecords.filter((record) => !keys.includes(record.key)));
-		setSelectedRowKeys((currentKeys) => currentKeys.filter((key) => !keys.includes(String(key))));
-		setKnowledgeUpdatedAt(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-
-		const nextTotal = filteredRecords.length - keys.length;
-		const nextPages = Math.max(1, Math.ceil(Math.max(nextTotal, 0) / pagination.pageSize));
-		setPagination((current) => ({
-			...current,
-			current: Math.min(current.current, nextPages),
-		}));
 	};
 
 	const openConfigDrawer = (record: KnowledgeFileRecord) => {
@@ -138,13 +111,12 @@ useEffect(() => {
 	};
 
 	const handleRefresh = () => {
-		setKnowledgeUpdatedAt(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-		messageApi.success('列表已刷新');
+		void refetch();
 	};
 
 	const handleCopyKnowledgeId = async () => {
 		try {
-			await navigator.clipboard.writeText(KNOWLEDGE_BASE.id);
+			await navigator.clipboard.writeText(knowledgeBase.id);
 			messageApi.success('知识库 ID 已复制');
 		} catch {
 			messageApi.error('复制失败，请手动复制');
@@ -164,59 +136,25 @@ useEffect(() => {
 			cancelText: '取消',
 			okButtonProps: { danger: true },
 			onOk: () => {
-				removeRecords(keys);
-				messageApi.success('删除成功');
+				messageApi.warning('删除接口暂未接入');
 			},
 		});
 	};
 
 	const handleSubmitConfig = async (values: ImportFormValues) => {
-		if (!configDrawerRecord) {
-			return;
-		}
-
-		const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
-		const parserConfig = getConfigDrawerParserLabel(values);
-		const sourceType = getConfigDrawerSourceLabel(values.sourceType);
-		const tags = values.autoTagging ? (values.selectedTags ?? []) : [];
-		setRecords((currentRecords) =>
-			currentRecords.map((record) =>
-				record.key === configDrawerRecord.key
-					? {
-						...record,
-						parserConfig,
-						sourceType,
-						tags,
-						updatedAt: now,
-					}
-					: record,
-			),
-		);
-		setKnowledgeUpdatedAt(now);
+		console.log('configForm===>', values);
 		closeConfigDrawer();
-		messageApi.success('配置已更新');
+		messageApi.warning('配置更新接口暂未接入');
 	};
 
 	const handleSubmitTags = async () => {
 		const values = await tagForm.validateFields();
-		setRecords((currentRecords) =>
-			currentRecords.map((record) =>
-				tagTargetKeys.includes(record.key)
-					? {
-							...record,
-							tags: values.tags ?? [],
-							updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-						}
-					: record,
-			),
-		);
-		setKnowledgeUpdatedAt(dayjs().format('YYYY-MM-DD HH:mm:ss'));
-		closeTagModal();
-		messageApi.success('标签已更新');
+		console.log('tagForm===>', values);
+		messageApi.warning('标签更新接口暂未接入');
 	};
 
 	const handleOpenDocument = (record: KnowledgeFileRecord) => {
-		navigate(`/knowledge/document/${record.id}`);
+		navigate(`/knowledge/document/${record?.document_id}`);
 	};
 
 	return (
@@ -225,40 +163,25 @@ useEffect(() => {
 			{modalContextHolder}
 			<Flex vertical gap={20}>
 				<KnowledgeHeader
-					knowledgeBase={KNOWLEDGE_BASE}
+					knowledgeBase={knowledgeBase}
 					knowledgeUpdatedAt={knowledgeUpdatedAt}
 					onCopyKnowledgeId={handleCopyKnowledgeId}
 				/>
 				<Divider className="knowledge-table-list__divider" />
 				<Flex vertical gap={20} className="knowledge-table-list__content">
 					<KnowledgeToolbar
-						knowledgeId={knowledgeId?.knowledgeId || ''}
+						knowledgeId={knowledgeId || ''}
 						searchKeyword={searchKeyword}
 						onSearchChange={handleSearchChange}
 						onRefresh={handleRefresh}
-						onOpenBatchConfig={() => {
-							if (selectedRowKeys.length !== 1) {
-								messageApi.warning('请先选择一个文件后再修改配置');
-								return;
-							}
-
-							const targetRecord = records.find((record) => record.key === String(selectedRowKeys[0]));
-							if (!targetRecord) {
-								messageApi.warning('未找到要修改配置的文件');
-								return;
-							}
-
-							openConfigDrawer(targetRecord);
-						}}
-						onDeleteSelected={() => handleDelete(selectedRowKeys.map(String))}
-						onOpenTagModal={() => openTagModal(selectedRowKeys.map(String))}
 					/>
 					<KnowledgeTable
-						records={pagedRecords}
+						isLoading={isLoading}x
+						records={records}
 						selectedRowKeys={selectedRowKeys}
-						currentPage={currentPage}
+						currentPage={pagination.current}
 						pageSize={pagination.pageSize}
-						total={filteredRecords.length}
+						total={knowledgeDocList?.total || 0}
 						onSelectionChange={setSelectedRowKeys}
 						onPageChange={(page, pageSize) => {
 							setPagination({ current: page, pageSize });

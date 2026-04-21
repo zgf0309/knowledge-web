@@ -6,23 +6,16 @@ import type { MessageInstance } from 'antd/es/message/interface';
 import { useQuery } from '@tanstack/react-query';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { addKnowledgeDoc, queryEmbeddingModels, queryKnowledgeGroup } from '@/services/knowledge/api';
+import { queryEmbeddingModels, queryKnowledgeGroup } from '@/services/knowledge/api';
 import { getLocalStorage, StorageKeys } from '@/utils/storage';
 import type { KnowledgeGroup } from '../../list/types';
 import { buildGroupTree, ensureRootGroup } from '../../list/utils';
 import {
-	addWebUrls,
 	createInitialImportFormValues,
 	createUploadProps,
-	extractUrlsFromWebBatchFile,
 	getUploadFileList,
-	MAX_WEB_BATCH_URL_COUNT,
-	shouldShowWebConfig,
-	validateWebImportBeforeSubmit,
 } from '../formConfig';
-import { buildImportDocumentsPayload } from '../payload';
 import type { EmbeddingModelOption, ImportFormValues } from '../types';
-import { createRecordFromUpload, createRecordFromWebUrl, persistImportedRecords } from '../../utils';
 
 type ImportPageType = 'import' | 'add';
 
@@ -47,7 +40,6 @@ interface ImportContextValue {
 	modelList: EmbeddingModelOption[];
 	knowledgeGroup: KnowledgeGroup[];
 	getUploadFileList: typeof getUploadFileList;
-	handleSubmit: () => Promise<void>;
 	goBack: () => void;
 	goToKnowledgeList: () => void;
 	goToTargetKnowledge: () => void;
@@ -68,7 +60,7 @@ export const ImportContextProvider = ({ children }: { children: ReactNode }) => 
 	const initialFormValues = useMemo(() => createInitialImportFormValues(), []);
 	const watchedValues = Form.useWatch([], form);
 	const formValues = watchedValues ?? initialFormValues;
-	const uploadProps = createUploadProps(formValues, messageApi);
+	const uploadProps = createUploadProps(formValues, messageApi, targetKnowledgeId);
 	const [modelList, setModelList] = useState<EmbeddingModelOption[]>([]);
 
 	const { data: modelsList } = useQuery({
@@ -125,117 +117,6 @@ export const ImportContextProvider = ({ children }: { children: ReactNode }) => 
 		navigate('/knowledge/index', { state: { knowledgeId: targetKnowledgeId } });
 	};
 
-	const handleSubmit = async () => {
-		try {
-			await form.validateFields();
-			const values = form.getFieldsValue(true) as ImportFormValues;
-      console.log('submit form values', values);
-			if (!targetKnowledgeId) {
-				messageApi.warning('未找到目标知识库 ID，请先创建或选择知识库');
-				return;
-			}
-
-			if (shouldShowWebConfig(values)) {
-				if (values.webUploadMode === 'batch') {
-					try {
-						const extractedUrls = await extractUrlsFromWebBatchFile(values.webBatchFiles[0]);
-						const normalizedBatchResult = addWebUrls({
-							existingUrls: [],
-							urlList: extractedUrls,
-							updateFrequency: values.webUpdateFrequency,
-							deduplicate: values.webDeduplicate,
-							maxCount: MAX_WEB_BATCH_URL_COUNT,
-						});
-
-						if (normalizedBatchResult.invalidUrls.length) {
-							messageApi.warning('部分 URL 格式不合法，已自动忽略');
-						}
-
-						if (normalizedBatchResult.duplicateUrls.length) {
-							messageApi.warning('知识库内 URL 去重已开启，重复链接已忽略');
-						}
-
-						if (normalizedBatchResult.overflow > 0) {
-							messageApi.warning(`批量上传模式下最多导入${MAX_WEB_BATCH_URL_COUNT}条 URL`);
-						}
-
-						if (!normalizedBatchResult.urls.length) {
-							messageApi.warning('上传文件中未解析到可用的 URL');
-							return;
-						}
-
-						const validationResult = validateWebImportBeforeSubmit({
-							webUrls: normalizedBatchResult.urls,
-						});
-						if (!validationResult.valid) {
-							messageApi.warning(validationResult.message);
-							return;
-						}
-
-						const normalizedValues: ImportFormValues = {
-							...values,
-							webUrls: validationResult.urls,
-						};
-						const payload = buildImportDocumentsPayload(targetKnowledgeId, normalizedValues);
-						const response: any = await addKnowledgeDoc({ ...payload, tenant_id: currentUser?.tenant_id });
-						if (response?.code && response.code !== 200) {
-							messageApi.warning(response?.msg || '导入失败，请稍后重试');
-							return;
-						}
-
-						const importedRecords = normalizedValues.webUrls.map((item) => createRecordFromWebUrl(item, normalizedValues));
-						persistImportedRecords(importedRecords);
-						goToTargetKnowledge();
-						return;
-					} catch (error) {
-						messageApi.warning(error instanceof Error ? error.message : '批量上传文件解析失败');
-						return;
-					}
-				}
-
-				const validationResult = validateWebImportBeforeSubmit(values);
-				if (!validationResult.valid) {
-					messageApi.warning(validationResult.message);
-					return;
-				}
-
-				const normalizedValues: ImportFormValues = {
-					...values,
-					webUrls: validationResult.urls,
-				};
-				const payload = buildImportDocumentsPayload(targetKnowledgeId, normalizedValues);
-				const response: any = await addKnowledgeDoc({ ...payload, tenant_id: currentUser?.tenant_id });
-				if (response?.code && response.code !== 200) {
-					messageApi.warning(response?.msg || '导入失败，请稍后重试');
-					return;
-				}
-
-				const importedRecords = normalizedValues.webUrls.map((item) => createRecordFromWebUrl(item, normalizedValues));
-				persistImportedRecords(importedRecords);
-				goToTargetKnowledge();
-				return;
-			}
-
-			if (!values.pendingFiles?.length) {
-				messageApi.warning('请先选择要导入的文件');
-				return;
-			}
-
-			const payload = buildImportDocumentsPayload(targetKnowledgeId, values);
-			const response: any = await addKnowledgeDoc({ ...payload, tenant_id: currentUser?.tenant_id });
-			if (response?.code && response.code !== 200) {
-				messageApi.warning(response?.msg || '导入失败，请稍后重试');
-				return;
-			}
-
-			const importedRecords = values.pendingFiles.map((file) => createRecordFromUpload(file, values));
-			persistImportedRecords(importedRecords);
-			goToTargetKnowledge();
-		} catch {
-			return;
-		}
-	};
-
 	const contextValue = useMemo<ImportContextValue>(() => ({
     currentUser,
 		pageType,
@@ -252,7 +133,6 @@ export const ImportContextProvider = ({ children }: { children: ReactNode }) => 
 		modelList,
 		knowledgeGroup,
 		getUploadFileList,
-		handleSubmit,
 		goBack,
 		goToKnowledgeList,
 		goToTargetKnowledge,

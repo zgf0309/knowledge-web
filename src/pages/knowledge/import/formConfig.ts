@@ -3,6 +3,7 @@ import type { UploadFile, UploadProps } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
+import { uploadFile } from '@/services/upload/api';
 import { DEFAULT_IMPORT_CONFIG } from '../constants';
 import type { ImportMode, WebImportItem, WebUpdateFrequency } from '../types';
 import type { ImportFormValues } from './types';
@@ -694,6 +695,7 @@ export const shouldShowQaTemplateDownloads = (formValues: Pick<ImportFormValues,
 export const createUploadProps = (
 	formValues: Pick<ImportFormValues, 'mode' | 'doc_category' | 'pendingFiles'>,
 	messageApi: MessageInstance,
+	kbId?: string,
 ): UploadProps => ({
 	multiple: true,
 	accept: isDocumentImport(formValues)
@@ -706,6 +708,34 @@ export const createUploadProps = (
 					? AUDIO_ACCEPT
 				: undefined,
 	beforeUpload: (file, fileList) => validateFileBeforeUpload(file, fileList, formValues, messageApi),
+		customRequest: async ({ file, onSuccess, onError }) => {
+			try {
+				const uploadResult: any = await uploadFile({
+					file,
+					kb_id: kbId,
+				});
+				const { code, data } = uploadResult;
+				if (code === 200) {
+					const payload = typeof data === 'object' && data !== null ? data : uploadResult;
+					const location = String(payload?.location ?? payload?.doc_url ?? payload?.doc_url ?? '').trim();
+					if (!location) {
+						throw new Error('上传成功但未返回文件地址');
+					}
+					onSuccess?.({
+						...payload,
+						location,
+						url: location,
+					}, undefined as any);
+				} else {
+					onError?.(uploadResult);
+				}
+				
+			} catch (error) {
+				const message = error instanceof Error ? error.message : '文件上传失败，请稍后重试';
+				messageApi.warning(message);
+				onError?.(error as Error);
+			}
+		},
 });
 
 export const createWebBatchUploadProps = (messageApi: MessageInstance): UploadProps => ({
@@ -752,12 +782,19 @@ export const extractUrlsFromWebBatchFile = async (file: UploadFile) => {
 
 export const createInitialImportFormValues = (): ImportFormValues => ({
 	...DEFAULT_IMPORT_CONFIG,
+	// 文件导入的待上传文件列表。
 	pendingFiles: [],
+	// 网页批量模式的上传文件列表。
 	webBatchFiles: [],
+	// 知识库名称。
 	knowledge_name: '',
+	// 知识库备注。
 	description: '',
+	// 所属群组 ID。
 	group_id: 'group-2',
+	// 默认向量模型。
 	embeddingModel: 'multilingual-embedding',
+	// 存储资源（默认共享存储）。
 	storageResource: 'shared',
 	selectedTags: [...DEFAULT_IMPORT_CONFIG.selectedTags],
 	parserOptions: { ...DEFAULT_IMPORT_CONFIG.parserOptions },
