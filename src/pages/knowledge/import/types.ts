@@ -35,14 +35,20 @@ export interface ImportTextParseOptions {
 	associate_filename: boolean;
 }
 
+export interface ImportTableParseOptions {
+	table_parsing: boolean;
+	knowledge_enhancement: boolean;
+}
+
 export interface ImportWebParseOptions {
 	urls: string[];
 	css_selector?: string;
 	extract_links: boolean;
+	web_content_parsing: boolean;
 }
 
 export interface ImportImageParseOptions {
-	parse_mode: 'manual' | 'auto' | 'ocr';
+	parse_mode: 'manual' | 'auto' | 'image_ocr';
 	manual_description?: string;
 }
 
@@ -54,6 +60,7 @@ export interface ImportAudioParseOptions {
 
 export type ImportDocumentParseOptions =
 	| ImportTextParseOptions
+	| ImportTableParseOptions
 	| ImportWebParseOptions
 	| ImportImageParseOptions
 	| ImportAudioParseOptions;
@@ -71,6 +78,22 @@ export interface ImportDocumentsPayload {
 	knowledge_id: string;
 	documents: ImportDocumentItemPayload[];
 	doc_category: ImportFileType;
+}
+
+export type TemplateTypeValue = 'legal' | 'contract' | 'resume' | 'ppt' | 'paper' | 'qa';
+
+export interface ImportTemplateDocumentItemPayload {
+	template_type: TemplateTypeValue;
+	name: string;
+	location: string;
+	size?: number;
+	tags?: string[];
+	parse_options?: Record<string, unknown>;
+}
+
+export interface ImportTemplateDocumentsPayload {
+	knowledge_id: string;
+	documents: ImportTemplateDocumentItemPayload[];
 }
 
 export interface ImportSelectionOption<T extends string> {

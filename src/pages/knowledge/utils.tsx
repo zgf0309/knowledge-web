@@ -135,11 +135,11 @@ const getAutoTags = (config: ImportConfig) => {
 		}
 	}
 
-	if (config.knowledgeEnhancement) {
+	if (config.knowledge_enhancement) {
 		tags.push('知识增强');
 	}
 
-	if (config.knowledgeGraph) {
+	if (config.knowledge_graph_extraction) {
 		tags.push('知识图谱');
 	}
 
@@ -173,20 +173,20 @@ export const getConfigDrawerParserLabel = (
 
 	if (
 		config.advancedParsing &&
-		(config.deepParserOptions.vlm || config.deepParserOptions.tableParsing || config.deepParserOptions.formulaParsing)
+		(config.deepParserOptions.multimodal_understanding || config.deepParserOptions.chart_recognition || config.deepParserOptions.formula_recognition)
 	) {
 		return '高级解析策略';
 	}
 
-	if (config.parserOptions.ocr && config.parserOptions.layoutAnalysis) {
+	if (config.parserOptions.image_ocr && config.parserOptions.layout_analysis) {
 		return 'OCR + 版面分析';
 	}
 
-	if (config.parserOptions.ocr) {
+	if (config.parserOptions.image_ocr) {
 		return 'OCR 增强识别';
 	}
 
-	if (config.parserOptions.layoutAnalysis) {
+	if (config.parserOptions.layout_analysis) {
 		return '表格增强解析';
 	}
 

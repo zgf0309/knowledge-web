@@ -6,21 +6,6 @@ import type {
 
 export const DEFAULT_GROUPS: KnowledgeGroup[] = [];
 
-export const INITIAL_RECORDS: KnowledgeBaseRecord[] = [
-	{
-		group_id: 'all',
-		knowledge_name: '测试知识库',
-		knowledge_id: '241b5eb7-c108-474d-bf1d-cd76f0f812a1',
-		knowledge_desc: '陈述：一句话描述，简要说明知识库用途',
-		language: 'zh-CN',
-		scope: 0,
-		status: 'ready',
-		tenant_id: 'mock-tenant',
-		create_date: '2026-03-31',
-		create_time: '11:22:58',
-	},
-];
-
 export const EMBEDDING_MODEL_PRESETS = [
 	{
 		value: 'multilingual-embedding',

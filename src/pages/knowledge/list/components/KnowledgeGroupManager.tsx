@@ -187,7 +187,11 @@ const KnowledgeGroupManager = ({
 			cancelText: '取消',
 			okButtonProps: { danger: true },
 			onOk: async () => {
-				await delKnowledgeTree({ group_id: groupId })
+				const params = {
+					tenant_id: tenantId,
+					group_id: groupId,
+				};
+				await delKnowledgeTree(params)
 					.then((res: any) => {
 						if (res?.code === 200) {
 							messageApi.success('节点已删除');

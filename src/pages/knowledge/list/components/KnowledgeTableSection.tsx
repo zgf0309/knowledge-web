@@ -127,7 +127,7 @@ const KnowledgeTableSection = ({
 							selectedRowKeys,
 							onChange: onSelectionChange,
 						}}
-						scroll={{ x: 1600 }}
+						scroll={{ x: '100%' }}
 					/>
 				)}
 			</Flex>

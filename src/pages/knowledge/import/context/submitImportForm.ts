@@ -1,6 +1,6 @@
 import type { FormInstance } from 'antd/es/form';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { addKnowledgeDoc } from '@/services/knowledge/api';
+import { addKnowledgeDoc, addKnowledgeDocTemplate } from '@/services/knowledge/api';
 import {
 	addWebUrls,
 	extractUrlsFromWebBatchFile,
@@ -8,7 +8,7 @@ import {
 	shouldShowWebConfig,
 	validateWebImportBeforeSubmit,
 } from '../formConfig';
-import { buildImportDocumentsPayload } from '../payload';
+import { buildImportDocumentsPayload, buildImportTemplateDocumentsPayload } from '../payload';
 import type { ImportFormValues } from '../types';
 import { createRecordFromUpload, createRecordFromWebUrl, persistImportedRecords } from '../../utils';
 
@@ -25,9 +25,16 @@ const submitDocuments = async (
 	values: ImportFormValues,
 	tenantId?: string,
 ) => {
-	// 根据表单值构建后端需要的导入请求体。
-	const payload = buildImportDocumentsPayload(targetKnowledgeId, values);
-	const response: any = await addKnowledgeDoc({ ...payload, tenant_id: tenantId });
+	// 按模板导入时，使用模板专用接口和字段结构。
+	const response: any = values.mode === 'byTemplate'
+		? await addKnowledgeDocTemplate({
+			...buildImportTemplateDocumentsPayload(targetKnowledgeId, values),
+			tenant_id: tenantId,
+		})
+		: await addKnowledgeDoc({
+			...buildImportDocumentsPayload(targetKnowledgeId, values),
+			tenant_id: tenantId,
+		});
 
 	if (response?.code && response.code !== 200) {
 		throw new Error(response?.msg || '导入失败，请稍后重试');

@@ -12,30 +12,29 @@ export interface KnowledgeBaseInfo {
 }
 
 export interface KnowledgeFileRecord {
-	chunk_count: number;
-	content_hash: string | null;
-	create_time: number;
-	doc_category: string;
-	doc_metadata: Record<string, any>;
-	doc_name: string;
-	doc_size: number;
-	doc_type: string;
 	document_id: string;
 	knowledge_id: string;
+	tenant_id: string;
+	doc_name: string;
+	doc_type: string;
 	location: string;
-	parser_config: Record<string, any>;
-	parser_id: string;
+	doc_category: string
+	template_type: any | null;
+	tags: any[];
+	parser_id: string | null;
+	parser_config: any | null;
+	chunk_count: number;
+	token_num: number;
 	progress: number;
 	progress_msg: string;
+	status: string;
 	run: number;
+	content_hash: any | null;
+	doc_metadata:  any | null;
 	source_type: string;
-	source_url: string | null;
-	status: FileStatus;
-	tags: string[];
-	template_type: string | null;
-	tenant_id: string;
-	token_num: number;
-	update_time: number;
+	source_url: any | null;
+	create_time: any | null;
+	update_time: any | null;
 }
 
 export interface BatchConfigValues {
@@ -58,21 +57,24 @@ export type ImportTemplateType =
 	| 'structuredQa';
 
 export interface ImportParserOptions {
-	textExtraction: boolean;
-	layoutAnalysis: boolean;
-	ocr: boolean;
+	text_extraction: boolean;
+	layout_analysis: boolean;
+	image_ocr: boolean;
+	table_parsing: boolean;
+	web_content_parsing: boolean;
 }
 
 export interface ImportDeepParserOptions {
-	vlm: boolean;
-	tableParsing: boolean;
-	formulaParsing: boolean;
+	multimodal_understanding: boolean;
+	chart_recognition: boolean;
+	formula_recognition: boolean;
+	asr: boolean;
 }
 
 export type KnowledgeEnhancementMethod =
-	| 'questionGeneration'
-	| 'paragraphSummary'
-	| 'tripleExtraction';
+	| 'question_generation'
+	| 'paragraph_summary'
+	| 'triple_extraction';
 
 export type WebParseMode = 'currentPage' | 'subPages';
 export type WebUploadMode = 'single' | 'batch';
@@ -113,9 +115,9 @@ export interface ImportConfig {
 	parserOptions: ImportParserOptions;
 	advancedParsing: boolean;
 	deepParserOptions: ImportDeepParserOptions;
-	knowledgeEnhancement: boolean;
-	enhancementMethods: KnowledgeEnhancementMethod[];
-	knowledgeGraph: boolean;
+	knowledge_enhancement: boolean;
+	enhancement_methods: KnowledgeEnhancementMethod[];
+	knowledge_graph_extraction: boolean;
 	sliceStrategy: ImportSliceStrategy;
 	customSliceIdentifiers: ImportSliceIdentifier[];
 	customSliceRegexPattern: string;

@@ -8,16 +8,16 @@ interface KnowledgeDetailDrawerProps {
 }
 
 const detailFields: Array<{ key: keyof KnowledgeFileRecord; label: string; render?: (value: KnowledgeFileRecord) => string }> = [
-	{ key: 'name', label: '文件名称' },
-	{ key: 'id', label: '文件 ID' },
-	{ key: 'status', label: '状态', render: (record) => getStatusLabel(record.status) },
-	{ key: 'dataSize', label: '数据量', render: (record) => `${record.dataSize} 字符` },
-	{ key: 'format', label: '文件格式' },
-	{ key: 'tags', label: '文件标签', render: (record) => (record.tags.length ? record.tags.join('、') : '-') },
-	{ key: 'uploader', label: '上传人' },
-	{ key: 'uploadedAt', label: '上传时间' },
-	{ key: 'parserConfig', label: '解析配置' },
-	{ key: 'sourceType', label: '来源' },
+	{ key: 'doc_name', label: '文件名称' },
+	{ key: 'document_id', label: '文件 ID' },
+	{ key: 'status', label: '状态', render: (record) => getStatusLabel(record.status as any) },
+	{ key: 'token_num', label: '数据量', render: (record) => `${record.token_num ?? 0} 字符` },
+	{ key: 'doc_type', label: '文件格式' },
+	{ key: 'tags', label: '文件标签', render: (record) => (record.tags?.length ? record.tags.join('、') : '-') },
+	{ key: 'doc_metadata', label: '上传人', render: (record) => (record.doc_metadata as any)?.uploader ?? '-' },
+	{ key: 'create_time', label: '上传时间', render: (record) => record.create_time ?? '-' },
+	{ key: 'parser_config', label: '解析配置', render: (record) => (record.parser_config as any)?.strategy ?? '-' },
+	{ key: 'source_type', label: '来源' },
 ];
 
 const KnowledgeDetailDrawer = ({ record, onClose }: KnowledgeDetailDrawerProps) => (

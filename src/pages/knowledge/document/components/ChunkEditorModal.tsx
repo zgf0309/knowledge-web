@@ -1,10 +1,11 @@
-import { Form, Input, Modal, Select } from 'antd';
+import { Form, Input, Modal } from 'antd';
 import type { ChunkEditorModalProps } from '../types';
 
 const ChunkEditorModal = ({
 	open,
 	editingChunkId,
 	form,
+	initialValues,
 	onCancel,
 	onSubmit,
 }: ChunkEditorModalProps) => (
@@ -16,15 +17,7 @@ const ChunkEditorModal = ({
 		okText={editingChunkId ? '保存' : '创建'}
 		destroyOnHidden
 	>
-		<Form form={form} layout="vertical">
-			<Form.Item name="sourceType" label="切片类型" rules={[{ required: true, message: '请选择切片类型' }]}>
-				<Select
-					options={[
-						{ label: '原文切片', value: '原文切片' },
-						{ label: '自定义切片', value: '自定义切片' },
-					]}
-				/>
-			</Form.Item>
+		<Form form={form} layout="vertical" initialValues={initialValues}>
 			<Form.Item
 				name="content"
 				label="切片内容"

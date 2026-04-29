@@ -799,7 +799,7 @@ export const createInitialImportFormValues = (): ImportFormValues => ({
 	selectedTags: [...DEFAULT_IMPORT_CONFIG.selectedTags],
 	parserOptions: { ...DEFAULT_IMPORT_CONFIG.parserOptions },
 	deepParserOptions: { ...DEFAULT_IMPORT_CONFIG.deepParserOptions },
-	enhancementMethods: [...DEFAULT_IMPORT_CONFIG.enhancementMethods],
+	enhancement_methods: [...DEFAULT_IMPORT_CONFIG.enhancement_methods],
 	customSliceIdentifiers: [...DEFAULT_IMPORT_CONFIG.customSliceIdentifiers],
 	customSliceReferenceInfo: [...DEFAULT_IMPORT_CONFIG.customSliceReferenceInfo],
 });

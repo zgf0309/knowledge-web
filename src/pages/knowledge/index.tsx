@@ -7,16 +7,14 @@ import { startTransition, useMemo, useState } from 'react';
 import {
 	TAG_OPTIONS,
 } from './constants';
-import KnowledgeConfigDrawer from './components/KnowledgeConfigDrawer';
 import KnowledgeHeader from './components/KnowledgeHeader';
 import KnowledgeTable from './components/KnowledgeTable';
 import KnowledgeTagModal from './components/KnowledgeTagModal';
 import KnowledgeToolbar from './components/KnowledgeToolbar';
-import type { ImportFormValues } from './import/types';
 import type { KnowledgeBaseInfo, KnowledgeFileRecord, TagFormValues } from './types';
 import { getUniqueTags } from './utils';
 import './index.less';
-import { queryKnowledgeDocList } from '@/services/knowledge/api';
+import { queryKnowledgeDocList, delKnowledgeDoc } from '@/services/knowledge/api';
 import {StorageKeys, getLocalStorage } from '@/utils/storage';
 import { useQuery } from '@tanstack/react-query';
 
@@ -27,11 +25,9 @@ const KnowledgePage = () => {
 	const knowledgeId = locationState?.knowledgeId;
 	const [searchKeyword, setSearchKeyword] = useState('');
 	const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
-	const [configDrawerRecord, setConfigDrawerRecord] = useState<KnowledgeFileRecord | null>(null);
 	const [tagModalOpen, setTagModalOpen] = useState(false);
 	const [tagTargetKeys, setTagTargetKeys] = useState<string[]>([]);
 	const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-	const [configForm] = Form.useForm<ImportFormValues>();
 	const [tagForm] = Form.useForm<TagFormValues>();
 	const [messageApi, messageContextHolder] = message.useMessage();
 	const [modal, modalContextHolder] = Modal.useModal();
@@ -72,19 +68,10 @@ const KnowledgePage = () => {
 		description: `文档数量：${knowledgeDocList?.total || 0}`,
 	}), [knowledgeDocList?.total, knowledgeId, knowledgeUpdatedAt, locationState?.knowledgeName]);
 
-	const closeConfigDrawer = () => {
-		setConfigDrawerRecord(null);
-		configForm.resetFields();
-	};
-
 	const closeTagModal = () => {
 		setTagModalOpen(false);
 		setTagTargetKeys([]);
 		tagForm.resetFields();
-	};
-
-	const openConfigDrawer = (record: KnowledgeFileRecord) => {
-		setConfigDrawerRecord(record);
 	};
 
 	const openTagModal = (keys: string[], tags?: string[]) => {
@@ -135,16 +122,23 @@ const KnowledgePage = () => {
 			okText: '确认删除',
 			cancelText: '取消',
 			okButtonProps: { danger: true },
-			onOk: () => {
+			onOk: async() => {
+				const params: any = {
+					doc_ids: keys || [], 
+					tenant_id: userInfo?.tenant_id || '',
+				}
+				const res: any = await delKnowledgeDoc(params);
+								if (res?.code === 200) {
+									setSelectedRowKeys([]);
+									refetch();
+									messageApi.success('删除成功');
+								} else {
+									messageApi.error(res?.msg || '删除失败，请稍后重试');
+								}
+				
 				messageApi.warning('删除接口暂未接入');
 			},
 		});
-	};
-
-	const handleSubmitConfig = async (values: ImportFormValues) => {
-		console.log('configForm===>', values);
-		closeConfigDrawer();
-		messageApi.warning('配置更新接口暂未接入');
 	};
 
 	const handleSubmitTags = async () => {
@@ -154,7 +148,7 @@ const KnowledgePage = () => {
 	};
 
 	const handleOpenDocument = (record: KnowledgeFileRecord) => {
-		navigate(`/knowledge/document/${record?.document_id}`);
+		navigate(`/knowledge/document`, {state: { record }});
 	};
 
 	return (
@@ -188,17 +182,10 @@ const KnowledgePage = () => {
 						}}
 						onOpenDocument={handleOpenDocument}
 						onOpenTagModal={openTagModal}
-						onOpenConfigModal={openConfigDrawer}
 						onDelete={handleDelete}
 					/>
 				</Flex>
 			</Flex>
-			<KnowledgeConfigDrawer
-				open={Boolean(configDrawerRecord)}
-				record={configDrawerRecord}
-				onCancel={closeConfigDrawer}
-				onSubmit={handleSubmitConfig}
-			/>
 			<KnowledgeTagModal
 				open={tagModalOpen}
 				targetCount={tagTargetKeys.length}

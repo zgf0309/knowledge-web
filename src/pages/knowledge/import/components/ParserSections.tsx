@@ -57,8 +57,6 @@ const CUSTOM_SLICE_REGEX_INCLUSION_OPTIONS = [
 	{ label: '匹配后丢弃', value: 'discard' },
 ] as const;
 
-const QA_DEFAULT_PARSER_VALUE = 'tableParsing';
-
 const sliceIdentifierTooltipContent = (
 	<div className="knowledge-import-route__slice-tooltip">
 		<div>按照所选的标识符切分文本。切分后，按设置的切片最大长度对切分后的文本组合成单一切片内容</div>
@@ -401,9 +399,9 @@ const handleKnowledgeEnhancementChange = (
 		return;
 	}
 
-	const currentMethods = form.getFieldValue('enhancementMethods');
+	const currentMethods = form.getFieldValue('enhancement_methods');
 	if (!Array.isArray(currentMethods) || currentMethods.length === 0) {
-		form.setFieldValue('enhancementMethods', ['questionGeneration']);
+		form.setFieldValue('enhancement_methods', ['question_generation']);
 	}
 };
 
@@ -425,14 +423,14 @@ const KnowledgeEnhancementField = ({
 		alignStart
 	>
 		<Flex vertical gap={12} style={{ width: '100%' }}>
-			<Form.Item name="knowledgeEnhancement" valuePropName="checked" className="knowledge-import-route__form-item">
+			<Form.Item name="knowledge_enhancement" valuePropName="checked" className="knowledge-import-route__form-item">
 				<Switch
 					onChange={(checked) => {
 						handleKnowledgeEnhancementChange(checked, form);
 					}}
 				/>
 			</Form.Item>
-			{formValues.knowledgeEnhancement ? (
+			{formValues.knowledge_enhancement ? (
 				<Flex vertical gap={12} className="knowledge-import-route__enhancement-block">
 					<Text type="secondary" className="knowledge-import-route__enhancement-tip">
 						知识增强文档字数上限为10万字；单个切片字数上限为8千字，超出部分无法使用知识增强
@@ -447,12 +445,12 @@ const KnowledgeEnhancementField = ({
 							}}
 						>
 							<Form.Item
-								name="enhancementMethods"
+								name="enhancement_methods"
 								className="knowledge-import-route__form-item"
 								rules={[
 									{
 										validator: async (_, value) => {
-											if (!form.getFieldValue('knowledgeEnhancement')) {
+											if (!form.getFieldValue('knowledge_enhancement')) {
 												return;
 											}
 
@@ -487,7 +485,7 @@ const KnowledgeGraphField = () => (
 		alignStart
 	>
 		<Form.Item
-			name="knowledgeGraph"
+			name="knowledge_graph_extraction"
 			valuePropName="checked"
 			extra="当前最多支持 10 个知识库启用图谱"
 			className="knowledge-import-route__form-item"
@@ -513,7 +511,7 @@ const QaParserSection = () => (
 				</Flex>
 			</Flex>
 			<LabeledRow label={renderRequiredLabel('解析策略')} alignStart>
-				<Radio.Group className="knowledge-import-route__radio-group" value={QA_DEFAULT_PARSER_VALUE}>
+				<Radio.Group className="knowledge-import-route__radio-group" value={'table_parsing'}>
 					{IMPORT_QA_PARSER_CARD_OPTIONS.map((option) => (
 						<Flex key={option.value} vertical gap={4} className="knowledge-import-route__radio-card">
 							<Radio value={option.value} disabled={option.disabled} className="knowledge-import-route__radio">
@@ -541,7 +539,7 @@ const QaParserSection = () => (
 				}}
 				alignStart
 			>
-				<Form.Item name="knowledgeEnhancement" valuePropName="checked" className="knowledge-import-route__form-item">
+				<Form.Item name="knowledge_enhancement" valuePropName="checked" className="knowledge-import-route__form-item">
 					<Switch />
 				</Form.Item>
 			</LabeledRow>
@@ -563,7 +561,7 @@ const WebParserSection = ({
 			</Flex>
 			<LabeledRow label={renderRequiredLabel('解析策略')} alignStart>
 				<Flex gap={12} wrap>
-					<Radio.Group className="knowledge-import-route__radio-group" value="webContentParsing">
+					<Radio.Group className="knowledge-import-route__radio-group" value="web_content_parsing">
 						{IMPORT_WEB_PARSER_CARD_OPTIONS.map((option) => (
 							<Flex key={option.value} vertical gap={4} className="knowledge-import-route__radio-card">
 								<Radio value={option.value} disabled={option.disabled} className="knowledge-import-route__radio">
@@ -620,8 +618,8 @@ const ImageParserSection = ({
 			</Flex>
 			<LabeledRow label="深度解析策略" alignStart>
 				<FormOptionCards
-					options={deepParserCardOptions.filter((option) => option.key === 'vlm')}
-					columns={1}
+					options={deepParserCardOptions.filter((option) => option.key === 'multimodal_understanding')}
+					columns={3}
 				/>
 			</LabeledRow>
 			<KnowledgeEnhancementField form={form} formValues={formValues} />

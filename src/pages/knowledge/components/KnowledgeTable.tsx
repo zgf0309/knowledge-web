@@ -17,7 +17,6 @@ interface KnowledgeTableProps {
 	onPageChange: (page: number, pageSize: number) => void;
 	onOpenDocument: (record: KnowledgeFileRecord) => void;
 	onOpenTagModal: (keys: string[], tags?: string[]) => void;
-	onOpenConfigModal: (record: KnowledgeFileRecord) => void;
 	onDelete: (keys: string[]) => void;
 }
 
@@ -32,7 +31,6 @@ const KnowledgeTable = ({
 	onPageChange,
 	onOpenDocument,
 	onOpenTagModal,
-	onOpenConfigModal,
 	onDelete,
 }: KnowledgeTableProps) => {
 	const getRecordFormat = (record: KnowledgeFileRecord) => {
@@ -157,14 +155,6 @@ const KnowledgeTable = ({
 			render: (_, record) => (
 				<Flex gap={10}>
 					<Button
-						type="link"
-						onClick={() => {
-							onOpenConfigModal(record);
-						}}
-					>
-						修改配置
-					</Button>
-					<Button
 						danger
 						type="link"
 						onClick={() => {
@@ -180,7 +170,7 @@ const KnowledgeTable = ({
 
 	return (
 		<Flex vertical className="knowledge-table-list__table-wrapper">
-			<Flex>
+			<Flex style={{width: '100%'}}>
 				{isLoading ? (
 					<Flex justify='center' align='center' style={{ width: '100%', height: 100 }}>
 						<Loading />
@@ -195,7 +185,7 @@ const KnowledgeTable = ({
 							selectedRowKeys,
 							onChange: onSelectionChange,
 						}}
-						scroll={{ x: 1320 }}
+						scroll={{ x: '100%' }}
 					/>
 				)}
 			</Flex>

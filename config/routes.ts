@@ -9,7 +9,7 @@ export default [
       { name: '知识库列表', path: '/knowledge/list', component: './knowledge/list' },
       { name: '文件列表', path: '/knowledge/index', component: './knowledge/index', hideInMenu: true },
       { name: '文件导入', path: '/knowledge/import', component: './knowledge/import', hideInMenu: true },
-      { name: '文档详情', path: '/knowledge/document/:id', component: './knowledge/document', hideInMenu: true },
+      { name: '文档详情', path: '/knowledge/document', component: './knowledge/document', hideInMenu: true },
       { name: '文档入库', path: '/knowledge/detail', component: './knowledge' },
       { name: '知识统计', path: '/knowledge/create', component: './table-list' },
     ] 

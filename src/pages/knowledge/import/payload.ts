@@ -2,13 +2,17 @@ import type { UploadFile } from 'antd';
 import type {
 	ImportFileType,
 	KnowledgeEnhancementMethod,
+	ImportTemplateType,
 	WebImportItem,
 } from '../types';
 import type {
 	ImportDocumentItemPayload,
 	ImportDocumentParseOptions,
+	ImportTableParseOptions,
 	ImportDocumentsPayload,
 	ImportFormValues,
+	ImportTemplateDocumentsPayload,
+	TemplateTypeValue,
 } from './types';
 
 interface CreateKnowledgePayload {
@@ -20,6 +24,15 @@ interface CreateKnowledgePayload {
 }
 
 type NormalizedImportDocCategory = ImportFileType;
+
+const TEMPLATE_TYPE_VALUE_MAP: Record<ImportTemplateType, TemplateTypeValue> = {
+	lawDocument: 'legal',
+	contractTemplate: 'contract',
+	resume: 'resume',
+	ppt: 'ppt',
+	paper: 'paper',
+	structuredQa: 'qa',
+};
 
 const toOptionalValue = <T,>(value: T | null | undefined) => {
 	if (value === null || value === undefined || value === '') {
@@ -72,11 +85,11 @@ const shouldUseChunkRegex = (values: ImportFormValues) =>
 	values.sliceStrategy === 'custom' && values.customSliceIdentifiers.includes('customRegex');
 
 const mapEnhancementMethod = (method: KnowledgeEnhancementMethod) => {
-	if (method === 'questionGeneration') {
+	if (method === 'question_generation') {
 		return 'question_gen';
 	}
 
-	if (method === 'paragraphSummary') {
+	if (method === 'paragraph_summary') {
 		return 'summary';
 	}
 
@@ -88,13 +101,13 @@ const buildTextParseOptions = (values: ImportFormValues): ImportDocumentParseOpt
 	const associateFileName = (values.customSliceReferenceInfo ?? []).includes('fileName');
 
 	return compactObject({
-		layout_analysis: Boolean(values.parserOptions.layoutAnalysis),
-		image_ocr: Boolean(values.parserOptions.ocr),
-		multimodal_understanding: Boolean(values.advancedParsing && values.deepParserOptions.vlm),
-		chart_recognition: Boolean(values.advancedParsing && values.deepParserOptions.tableParsing),
-		formula_recognition: Boolean(values.advancedParsing && values.deepParserOptions.formulaParsing),
-		knowledge_enhancement: Boolean(values.knowledgeEnhancement),
-		knowledge_graph_extraction: Boolean(values.knowledgeGraph),
+		layout_analysis: Boolean(values.parserOptions.layout_analysis),
+		image_ocr: Boolean(values.parserOptions.image_ocr),
+		multimodal_understanding: Boolean(values.advancedParsing && values.deepParserOptions.multimodal_understanding),
+		chart_recognition: Boolean(values.advancedParsing && values.deepParserOptions.chart_recognition),
+		formula_recognition: Boolean(values.advancedParsing && values.deepParserOptions.formula_recognition),
+		knowledge_enhancement: Boolean(values.knowledge_enhancement),
+		knowledge_graph_extraction: Boolean(values.knowledge_graph_extraction),
 		chunk_strategy: chunkStrategy,
 		chunk_size: chunkStrategy === 'custom' || chunkStrategy === 'page' ? values.customSliceMaxLength : undefined,
 		chunk_regex: shouldUseChunkRegex(values)
@@ -104,6 +117,12 @@ const buildTextParseOptions = (values: ImportFormValues): ImportDocumentParseOpt
 	});
 };
 
+const buildTableParseOptions = ( values: ImportFormValues): ImportTableParseOptions => {
+	return compactObject({
+		table_parsing: Boolean(values.parserOptions.table_parsing),
+		knowledge_enhancement: Boolean(values.knowledge_enhancement),
+	})
+};
 const buildWebParseOptions = (
 	urls: string[],
 	values: Pick<ImportFormValues, 'webHtmlFilter' | 'webHtmlFilterSelector' | 'webExtractLinks'>,
@@ -112,13 +131,14 @@ const buildWebParseOptions = (
 		urls,
 		css_selector: values.webHtmlFilter ? toOptionalValue(values.webHtmlFilterSelector.trim()) : undefined,
 		extract_links: Boolean(values.webExtractLinks),
+		web_content_parsing: true,
 	});
 
 const buildImageParseOptions = (values: ImportFormValues) => {
 	const hasAutoCapabilities =
 		values.advancedParsing &&
-		(values.deepParserOptions.vlm || values.deepParserOptions.tableParsing || values.deepParserOptions.formulaParsing);
-	const parseMode: 'manual' | 'auto' | 'ocr' = values.parserOptions.ocr ? 'ocr' : hasAutoCapabilities ? 'auto' : 'manual';
+		(values.deepParserOptions.multimodal_understanding || values.deepParserOptions.chart_recognition || values.deepParserOptions.formula_recognition);
+	const parseMode: 'manual' | 'auto' | 'image_ocr' = values.parserOptions.image_ocr ? 'image_ocr' : hasAutoCapabilities ? 'auto' : 'manual';
 
 	return compactObject({
 		parse_mode: parseMode,
@@ -127,11 +147,12 @@ const buildImageParseOptions = (values: ImportFormValues) => {
 };
 
 const buildAudioParseOptions = (values: ImportFormValues) => ({
-	knowledge_enhancement: Boolean(values.knowledgeEnhancement),
-	enhancement_types: values.knowledgeEnhancement
-		? (values.enhancementMethods ?? []).map(mapEnhancementMethod)
+	knowledge_enhancement: Boolean(values.knowledge_enhancement),
+	enhancement_types: values.knowledge_enhancement
+		? (values.enhancement_methods ?? []).map(mapEnhancementMethod)
 		: [],
-	knowledge_graph_extraction: Boolean(values.knowledgeGraph),
+	knowledge_graph_extraction: Boolean(values.knowledge_graph_extraction),
+	ars: true,
 });
 
 const getDocumentParseOptions = (
@@ -141,6 +162,9 @@ const getDocumentParseOptions = (
 ): ImportDocumentParseOptions | undefined => {
 	if (docCategory === 'text') {
 		return buildTextParseOptions(values);
+	}
+	if (docCategory === 'table') {
+		return buildTableParseOptions(values);
 	}
 
 	if (docCategory === 'web') {
@@ -167,6 +191,9 @@ const getFileLocation = (file: UploadFile) => {
 		),
 	);
 };
+
+const getTemplateTypeValue = (templateType: ImportTemplateType): TemplateTypeValue =>
+	TEMPLATE_TYPE_VALUE_MAP[templateType];
 
 const createFileDocument = (
 	file: UploadFile,
@@ -219,6 +246,30 @@ export const buildImportDocumentsPayload = (
 	return {
 		knowledge_id: knowledgeId,
 		doc_category: docCategory,
+		documents,
+	};
+};
+
+export const buildImportTemplateDocumentsPayload = (
+	knowledgeId: string,
+	values: ImportFormValues,
+): ImportTemplateDocumentsPayload => {
+	const tags = getNormalizedTags(values);
+	const documents = (values.pendingFiles ?? []).map((file) => {
+		const size = file.originFileObj?.size ?? file.size;
+
+		return compactObject({
+			template_type: getTemplateTypeValue(values.templateType),
+			name: file.name,
+			location: String(getFileLocation(file) ?? ''),
+			size: typeof size === 'number' ? size : undefined,
+			tags,
+			parse_options: {},
+		});
+	});
+
+	return {
+		knowledge_id: knowledgeId,
 		documents,
 	};
 };
