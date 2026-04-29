@@ -176,7 +176,7 @@ const KnowledgePage = () => {
 						onRefresh={handleRefresh}
 					/>
 					<KnowledgeTable
-						isLoading={isLoading}x
+						isLoading={isLoading}
 						records={records}
 						selectedRowKeys={selectedRowKeys}
 						currentPage={pagination.current}
