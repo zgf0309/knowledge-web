@@ -1,103 +1,122 @@
 import { PageContainer } from '@ant-design/pro-components';
 import { message } from 'antd';
-import { getLocalStorage, StorageKeys } from '@/utils/storage';
-import AssistantHero from './components/AssistantHero';
+import { useCallback } from 'react';
+import { useTenantId } from '@/hooks/useTenantId';
 import HistorySidebar from './components/HistorySidebar';
-import MessageList from './components/MessageList';
 import QuestionComposer from './components/QuestionComposer';
-import { ASSISTANT_MODES } from './constants';
-import { useAssistantHome } from './useAssistantHome';
-import { useChatSession } from './useChatSession';
+import WelcomeChatContent from './components/WelcomeChatContent';
+import { useAssistantHome } from './hooks/useAssistantHome';
+import { useChatSession } from './hooks/useChatSession';
 import './index.less';
 
 const KnowledgeWelcomePage = () => {
-	const [messageApi, messageContextHolder] = message.useMessage();
+  const [messageApi, messageContextHolder] = message.useMessage();
+  const tenantId = useTenantId();
+  const {
+    historyCollapsed,
+    conversations,
+    toggleHistory,
+    createConversation,
+    question,
+    setQuestion,
+    knowledgeId,
+    setKnowledgeId,
+    suggestions,
+    refreshSuggestions,
+  } = useAssistantHome();
+  const {
+    conversationId,
+    messages,
+    historyLoading,
+    creating,
+    sending,
+    resetSession,
+    loadConversation,
+    submitQuestion,
+  } = useChatSession();
 
-	const userInfo = (getLocalStorage<{ tenant_id?: string }>(StorageKeys.CURRENT_USER) ?? {}) as {
-		tenant_id?: string;
-	};
-	const tenantId = userInfo.tenant_id ?? '';
+  const handleSubmit = useCallback(async () => {
+    const content = question.trim();
+    if (!content) return;
 
-	const home = useAssistantHome();
-	const chat = useChatSession();
+    if (!knowledgeId) {
+      messageApi.warning('请选择一个知识库');
+      return;
+    }
 
-	const handleSubmit = async () => {
-		const trimmed = home.question.trim();
-		if (!trimmed) return;
-		if (!home.knowledgeId) {
-			messageApi.warning('请选择一个知识库');
-			return;
-		}
-		try {
-			const isNewConversation = !chat.conversationId;
-			const cid = await chat.submitQuestion({
-				content: trimmed,
-				kbId: home.knowledgeId,
-			});
-			home.setQuestion('');
-			if (isNewConversation) {
-				home.createConversation(trimmed.slice(0, 20), home.mode, cid);
-			}
-		} catch (err: any) {
-			messageApi.error(err?.message ?? '提交失败，请稍后重试');
-		}
-	};
+    try {
+      const isNewConversation = !conversationId;
+      const nextConversationId = await submitQuestion({
+        content,
+        kbId: knowledgeId,
+        tenantId,
+      });
 
-	const handleNewConversation = () => {
-		chat.resetSession();
-		home.setQuestion('');
-		home.refreshSuggestions();
-	};
+      setQuestion('');
 
-	const handleSelectConversation = (id: string) => {
-		chat.loadConversation(id);
-	};
+      if (isNewConversation) {
+        createConversation(content.slice(0, 20), nextConversationId);
+      }
+    } catch (err: any) {
+      messageApi.error(err?.message ?? '提交失败，请稍后重试');
+    }
+  }, [
+    conversationId,
+    createConversation,
+    knowledgeId,
+    messageApi,
+    question,
+    setQuestion,
+    submitQuestion,
+    tenantId,
+  ]);
 
-	const hasMessages = chat.messages.length > 0;
+  const handleNewConversation = useCallback(() => {
+    resetSession();
+    setQuestion('');
+    refreshSuggestions();
+  }, [refreshSuggestions, resetSession, setQuestion]);
 
-	return (
-		<PageContainer className="welcome-page" title={false} ghost>
-			{messageContextHolder}
-			<div className="welcome-page__layout">
-				<HistorySidebar
-					collapsed={home.historyCollapsed}
-					conversations={home.conversations}
-					activeId={chat.conversationId}
-					onToggle={home.toggleHistory}
-					onCreate={handleNewConversation}
-					onSelect={handleSelectConversation}
-				/>
-				<main className="welcome-page__main">
-					<div className="welcome-page__center">
-						{hasMessages ? (
-							<MessageList
-								messages={chat.messages}
-								loading={chat.historyLoading}
-								pending={chat.sending}
-							/>
-						) : (
-							<AssistantHero
-								suggestions={home.suggestions}
-								onSuggestionClick={(text) => home.setQuestion(text)}
-							/>
-						)}
-						<QuestionComposer
-							modes={ASSISTANT_MODES}
-							mode={home.mode}
-							onModeChange={home.setMode}
-							value={home.question}
-							onChange={home.setQuestion}
-							onSubmit={handleSubmit}
-							tenantId={tenantId}
-							knowledgeId={home.knowledgeId}
-							onKnowledgeChange={home.setKnowledgeId}
-							disabled={chat.creating || chat.sending}
-						/>
-					</div>
-				</main>
-			</div>
-		</PageContainer>
-	);
+  return (
+    <PageContainer
+      className="welcome-page"
+      title={false}
+      pageHeaderRender={false}
+      ghost
+    >
+      {messageContextHolder}
+      <div className="welcome-page__layout">
+        <HistorySidebar
+          collapsed={historyCollapsed}
+          conversations={conversations}
+          activeId={conversationId}
+          onToggle={toggleHistory}
+          onCreate={handleNewConversation}
+          onSelect={loadConversation}
+        />
+        <main className="welcome-page__main">
+          <div className="welcome-page__center">
+            <WelcomeChatContent
+              messages={messages}
+              historyLoading={historyLoading}
+              sending={sending}
+              suggestions={suggestions}
+              onSuggestionClick={setQuestion}
+            />
+            <QuestionComposer
+              value={question}
+              onChange={setQuestion}
+              onSubmit={handleSubmit}
+              tenantId={tenantId}
+              knowledgeId={knowledgeId}
+              onKnowledgeChange={setKnowledgeId}
+              disabled={creating || sending}
+            />
+          </div>
+        </main>
+      </div>
+    </PageContainer>
+  );
 };
 
 export default KnowledgeWelcomePage;

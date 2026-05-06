@@ -8,6 +8,7 @@ import { request } from '@/utils/enhancedRequest';
  */
 export async function createConversation(
 	data: {
+		tenant_id?: string;
 		kb_id: string;
 		title: string;
 	},
@@ -18,28 +19,6 @@ export async function createConversation(
 		data,
 		...(options || {}),
 	});
-}
-
-/**
- * 发送消息
- * POST /api/v1/chat/conversations/{conversation_id}/messages
- */
-export async function sendChatMessage(
-	conversationId: string,
-	data: {
-		content: string;
-		stream?: boolean;
-	},
-	options?: { [key: string]: any },
-) {
-	return request<any>(
-		`/knowledge-api/api/v1/chat/conversations/${conversationId}/messages`,
-		{
-			method: 'POST',
-			data,
-			...(options || {}),
-		},
-	);
 }
 
 /**

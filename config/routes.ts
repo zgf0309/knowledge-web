@@ -16,7 +16,7 @@ export default [
   },
   { 
     name: '检索服务',
-    icon: 'BookOutlined', 
+    icon: 'SearchOutlined', 
     path: '/search', 
     routes: [
       { name: '向量检索', path: '/search/vector', component: './table-list' },
@@ -26,7 +26,7 @@ export default [
   },
   { 
     name: '数据处理',
-    icon: 'BookOutlined', 
+    icon: 'DatabaseOutlined', 
     path: '/data-handle', 
     routes: [
       { name: '文档解析', path: '/data-handle/parse', component: './table-list' },
@@ -36,7 +36,7 @@ export default [
   },
   { 
     name: '知识图谱',
-    icon: 'BookOutlined', 
+    icon: 'ApartmentOutlined', 
     path: '/knowledge-graph', 
     routes: [
       { name: '图谱构建', path: '/knowledge-graph/build', component: './table-list' },

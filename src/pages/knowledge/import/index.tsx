@@ -1,16 +1,16 @@
-import { PageContainer } from '@ant-design/pro-components';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
 import { Button, Flex, Form, Typography } from 'antd';
-import { ImportContextProvider, useImportContext } from './context';
 import { ImportFooter } from './components/Scaffold/ImportFooter';
 import { ImportPageHeader } from './components/Scaffold/ImportPageHeader';
 import {
-	ImportOverviewStep,
-	ImportParserSection,
-	ImportSliceSection,
-	ImportSourceSection,
-	validateAddOverviewStep,
+  ImportOverviewStep,
+  ImportParserSection,
+  ImportSliceSection,
+  ImportSourceSection,
+  validateAddOverviewStep,
 } from './components/Sections';
+import { ImportContextProvider, useImportContext } from './context';
 import { submitImportForm } from './context/submitImportForm';
 import type { ImportFormValues } from './types';
 import './index.less';
@@ -18,107 +18,114 @@ import './index.less';
 const { Title } = Typography;
 
 const KnowledgeImportPageContent = () => {
-	const {
-		pageType,
-		currentStep,
-		setCurrentStep,
-		messageContextHolder,
-		messageApi,
-		currentUser,
-		targetKnowledgeId,
-		goToTargetKnowledge,
-		form,
-		initialFormValues,
-		formValues,
-		goBack,
-		goToKnowledgeList,
-	} = useImportContext();
+  const {
+    pageType,
+    currentStep,
+    setCurrentStep,
+    messageContextHolder,
+    messageApi,
+    tenantId,
+    targetKnowledgeId,
+    goToTargetKnowledge,
+    form,
+    initialFormValues,
+    formValues,
+    goBack,
+    goToKnowledgeList,
+  } = useImportContext();
 
-	const handleSubmit = async () => {
-		await submitImportForm({
-			form,
-			targetKnowledgeId,
-			currentUser,
-			messageApi,
-			goToTargetKnowledge,
-		});
-	};
+  const handleSubmit = async () => {
+    await submitImportForm({
+      form,
+      targetKnowledgeId,
+      tenantId,
+      messageApi,
+      goToTargetKnowledge,
+    });
+  };
 
-	return (
-		<PageContainer
-			className="knowledge-import-route"
-			title={<Flex align="center" gap={10}>
-				<Button type="text" icon={<ArrowLeftOutlined />} onClick={goBack} />
-				<Title level={5} className="knowledge-import-route__title">
-					{pageType === 'add' ? '创建知识库' : '导入文件'}
-				</Title>
-			</Flex>}
-		>
-			{messageContextHolder}
-			<div className="knowledge-import-route__shell">
-				<Flex vertical gap={20} className="knowledge-import-route__layout">
-					<ImportPageHeader currentStep={currentStep} />
-					<div className="knowledge-import-route__content">
-						<Flex gap={20} className="knowledge-import-route__content-wrapper">
-							<Form<ImportFormValues>
-								form={form}
-								layout="horizontal"
-								className="knowledge-import-route__form"
-								initialValues={initialFormValues}
-								style={{ width: '100%' }}
-							>
-								{currentStep === 0 ? (
-									<ImportOverviewStep />
-								) : (
-									<Flex vertical gap={24}>
-										<ImportSourceSection />
-										{formValues.mode === 'byType' ? (
-											<>
-												<ImportParserSection />
-												{formValues.doc_category !== 'table' && formValues.doc_category !== 'image' ? <ImportSliceSection /> : null}
-											</>
-										) : null}
-									</Flex>
-								)}
-							</Form>
-						</Flex>
-					</div>
-					<ImportFooter
-						currentStep={currentStep}
-						type={pageType}
-						onCancel={() => {
-							if (currentStep === 1) {
-								setCurrentStep(0);
-								return;
-							}
+  return (
+    <PageContainer
+      className="knowledge-import-route"
+      title={
+        <Flex align="center" gap={10}>
+          <Button type="text" icon={<ArrowLeftOutlined />} onClick={goBack} />
+          <Title level={5} className="knowledge-import-route__title">
+            {pageType === 'add' ? '创建知识库' : '导入文件'}
+          </Title>
+        </Flex>
+      }
+    >
+      {messageContextHolder}
+      <div className="knowledge-import-route__shell">
+        <Flex vertical gap={20} className="knowledge-import-route__layout">
+          <ImportPageHeader currentStep={currentStep} />
+          <div className="knowledge-import-route__content">
+            <Flex gap={20} className="knowledge-import-route__content-wrapper">
+              <Form<ImportFormValues>
+                form={form}
+                layout="horizontal"
+                className="knowledge-import-route__form"
+                initialValues={initialFormValues}
+                style={{ width: '100%' }}
+              >
+                {currentStep === 0 ? (
+                  <ImportOverviewStep />
+                ) : (
+                  <Flex vertical gap={24}>
+                    <ImportSourceSection />
+                    {formValues.mode === 'byType' ? (
+                      <>
+                        <ImportParserSection />
+                        {formValues.doc_category !== 'table' &&
+                        formValues.doc_category !== 'image' ? (
+                          <ImportSliceSection />
+                        ) : null}
+                      </>
+                    ) : null}
+                  </Flex>
+                )}
+              </Form>
+            </Flex>
+          </div>
+          <ImportFooter
+            currentStep={currentStep}
+            type={pageType}
+            onCancel={() => {
+              if (currentStep === 1) {
+                setCurrentStep(0);
+                return;
+              }
 
-							goToKnowledgeList();
-						}}
-						onPrev={() => {
-							setCurrentStep(0);
-						}}
-						onNext={() => {
-							if (pageType === 'add') {
-								void validateAddOverviewStep(form).then(() => {
-									setCurrentStep(1);
-								}).catch(() => undefined);
-								return;
-							}
+              goToKnowledgeList();
+            }}
+            onPrev={() => {
+              setCurrentStep(0);
+            }}
+            onNext={() => {
+              if (pageType === 'add') {
+                void validateAddOverviewStep(form)
+                  .then(() => {
+                    setCurrentStep(1);
+                  })
+                  .catch(() => undefined);
+                return;
+              }
 
-							setCurrentStep(1);
-						}}
-						onSubmit={handleSubmit}
-					/>
-				</Flex>
-			</div>
-		</PageContainer>
-	);
+              setCurrentStep(1);
+            }}
+            onSubmit={handleSubmit}
+          />
+        </Flex>
+      </div>
+    </PageContainer>
+  );
 };
 
 const KnowledgeImportPage = () => (
-	<ImportContextProvider>
-		<KnowledgeImportPageContent />
-	</ImportContextProvider>
+  <ImportContextProvider>
+    <KnowledgeImportPageContent />
+  </ImportContextProvider>
 );
 
 export default KnowledgeImportPage;
