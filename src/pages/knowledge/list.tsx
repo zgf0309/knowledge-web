@@ -136,7 +136,6 @@ const KnowledgeListPage = () => {
   };
   // 删除知识库
   const handleDelete = (keys: string[]) => {
-    console.log('要删除的知识库 ID 列表', keys);
     if (!keys.length) {
       messageApi.warning('请先选择要删除的知识库');
       return;
@@ -171,13 +170,12 @@ const KnowledgeListPage = () => {
 
   // 移动知识库
   const handleConfirmBatchMove = (targetGroupKey: string) => {
-    console.log('批量移动到分组', targetGroupKey);
     const keys = selectedRowKeys.map(String);
     if (!keys.length) {
       messageApi.warning('请先选择要移动的知识库');
       return;
     }
-    console.log('要移动的知识库 ID 列表', keys);
+    void targetGroupKey;
     setSelectedRowKeys([]);
     closeBatchMoveModal();
     messageApi.success('知识库群组已更新');

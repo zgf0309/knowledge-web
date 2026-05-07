@@ -1,11 +1,13 @@
 import {
   type EventSourceMessage,
+  EventStreamContentType,
   type FetchEventSourceInit,
   fetchEventSource,
 } from '@microsoft/fetch-event-source';
 import { buildAuthHeaders } from '@/utils/enhancedRequest';
 
 type SendChatMessageData = {
+  tenant_id?: string;
   content: string;
   stream?: boolean;
 };
@@ -40,8 +42,11 @@ const extractStreamContent = (message: any): string => {
   const data = message?.data ?? message;
   return String(
     data?.answer ??
+      data?.text ??
       data?.content ??
       data?.delta ??
+      data?.reply ??
+      data?.message ??
       data?.message?.content ??
       data?.choices?.[0]?.delta?.content ??
       '',
@@ -67,6 +72,7 @@ export async function sendChatMessage(
       headers: {
         ...toFetchHeaders(buildAuthHeaders()),
         Accept: 'text/event-stream',
+        // 'Content-Type': 'application/json',
         ...(options?.headers ?? {}),
       },
       body: JSON.stringify({
@@ -78,9 +84,17 @@ export async function sendChatMessage(
           throw new Error(`发送消息失败：${response.status}`);
         }
 
+        const contentType = response.headers.get('content-type') ?? '';
+        if (!contentType.includes(EventStreamContentType)) {
+          throw new Error(
+            `发送消息失败：接口未返回流式响应，当前 Content-Type 为 ${contentType || '空'}`,
+          );
+        }
+
         await options?.onopen?.(response);
       },
       onmessage(event) {
+        console.log('onmessage', event);
         if (!event.data || event.data === '[DONE]') {
           return;
         }

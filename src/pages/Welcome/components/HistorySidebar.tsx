@@ -4,11 +4,13 @@ import {
   MenuUnfoldOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { Button, Empty, Tooltip, Typography } from 'antd';
-import dayjs from 'dayjs';
+import { Button, Empty, Tooltip, Typography, theme } from 'antd';
+import type { CSSProperties } from 'react';
 import type { ConversationItem } from '../types';
 
 const { Text } = Typography;
+
+type ThemeStyle = CSSProperties & Record<`--${string}`, string>;
 
 interface HistorySidebarProps {
   collapsed: boolean;
@@ -27,6 +29,13 @@ const HistorySidebar = ({
   onCreate,
   onSelect,
 }: HistorySidebarProps) => {
+  const { token } = theme.useToken();
+  const newConversationButtonStyle: ThemeStyle = {
+    '--welcome-primary-color': token.colorPrimary,
+    '--welcome-primary-bg': token.colorPrimaryBg,
+    '--welcome-primary-bg-hover': token.colorPrimaryBgHover,
+  };
+
   if (collapsed) {
     return (
       <aside className="welcome-page__history welcome-page__history--collapsed">
@@ -66,6 +75,7 @@ const HistorySidebar = ({
         icon={<PlusOutlined />}
         onClick={onCreate}
         className="welcome-page__history-new"
+        style={newConversationButtonStyle}
       >
         新建对话
       </Button>
@@ -81,12 +91,6 @@ const HistorySidebar = ({
               <div className="welcome-page__history-item-title">
                 {item.title}
               </div>
-              <Text
-                type="secondary"
-                className="welcome-page__history-item-time"
-              >
-                {dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')}
-              </Text>
             </button>
           ))
         ) : (

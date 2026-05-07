@@ -50,15 +50,15 @@
 
   &__history-new {
     margin-bottom: 16px;
-    color: #5566ff;
+    color: var(--welcome-primary-color);
     font-weight: 500;
-    background: #f5f7ff;
+    background: var(--welcome-primary-bg);
     border-color: transparent;
 
     &:hover,
     &:focus {
-      color: #4453eb !important;
-      background: #ebeefe !important;
+      color: var(--welcome-primary-color) !important;
+      background: var(--welcome-primary-bg-hover) !important;
     }
   }
 
@@ -114,7 +114,12 @@
     flex: 1;
     align-items: center;
     justify-content: center;
+    min-height: inherit;
     padding: 24px;
+
+    &--conversation {
+      align-items: stretch;
+    }
   }
 
   &__center {
@@ -124,6 +129,18 @@
     align-items: center;
     width: 100%;
     max-width: 720px;
+
+    &--conversation {
+      justify-content: space-between;
+      height: 100%;
+      min-height: calc(100vh - 168px);
+    }
+  }
+
+  &__box {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
   }
 
   // ---------- 标题 ----------
@@ -227,16 +244,6 @@
     align-items: center;
     justify-content: space-between;
     margin-top: 8px;
-  }
-
-  &__composer-knowledge {
-    min-width: 140px;
-
-    .ant-select-selector {
-      background: #f5f7ff !important;
-      border-color: transparent !important;
-      border-radius: 16px !important;
-    }
   }
 
   // ---------- 知识库选择器 ----------
@@ -428,54 +435,54 @@
     }
   }
 
-  &__composer-tips {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.35);
-    font-size: 12px;
-    text-align: center;
-  }
-
   // ---------- 消息列表 ----------
   &__messages {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: 16px;
+    gap: 28px;
     width: 100%;
-    max-height: 60vh;
-    padding: 8px 4px;
+    max-height: calc(100vh - 280px);
+    padding: 0 0 24px;
     overflow-y: auto;
   }
 
   &__message {
     display: flex;
-    gap: 12px;
     align-items: flex-start;
+    width: 100%;
 
-    &--user {
-      flex-direction: row-reverse;
+    &--assistant {
+      justify-content: flex-start;
+      text-align: left;
     }
 
-    &-avatar {
-      flex-shrink: 0;
-      color: #5566ff;
-      background: #eef0ff;
+    &--user {
+      justify-content: flex-end;
+      text-align: right;
     }
   }
 
   &__message-bubble {
-    max-width: 70%;
-    padding: 10px 14px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
     color: rgba(0, 0, 0, 0.85);
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
+    font-size: 15px;
+    line-height: 1.9;
+    white-space: normal;
     word-break: break-word;
-    background: #f5f7ff;
-    border-radius: 12px;
+    background: transparent;
+    border-radius: 0;
 
     .welcome-page__message--user & {
+      width: auto;
+      max-width: 560px;
+      padding: 10px 16px;
       color: #fff;
+      line-height: 1.6;
       background: linear-gradient(135deg, #6c5ce7 0%, #a78bfa 100%);
+      border-radius: 12px;
     }
 
     &--pending {
@@ -483,6 +490,101 @@
       gap: 8px;
       align-items: center;
       color: rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  &__markdown {
+    width: 100%;
+
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin: 18px 0 10px;
+      color: rgba(0, 0, 0, 0.9);
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    h1 {
+      font-size: 22px;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    h4 {
+      font-size: 16px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 12px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    strong {
+      font-weight: 600;
+    }
+
+    code {
+      padding: 2px 5px;
+      font-size: 0.92em;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+    }
+
+    pre {
+      margin: 12px 0;
+      padding: 12px 14px;
+      overflow-x: auto;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+
+      code {
+        padding: 0;
+        background: transparent;
+      }
+    }
+
+    hr {
+      margin: 16px 0;
+      border: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .welcome-page__message--user & {
+      p {
+        margin-bottom: 0;
+      }
+
+      code {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.18);
+      }
     }
   }
 }

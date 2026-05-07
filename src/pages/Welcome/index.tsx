@@ -34,6 +34,7 @@ const KnowledgeWelcomePage = () => {
     loadConversation,
     submitQuestion,
   } = useChatSession();
+  const hasConversationMessages = messages.length > 0;
 
   const handleSubmit = useCallback(async () => {
     const content = question.trim();
@@ -94,8 +95,18 @@ const KnowledgeWelcomePage = () => {
           onCreate={handleNewConversation}
           onSelect={loadConversation}
         />
-        <main className="welcome-page__main">
-          <div className="welcome-page__center">
+        <main
+          className={`welcome-page__main${
+            hasConversationMessages ? ' welcome-page__main--conversation' : ''
+          }`}
+        >
+          <div
+            className={`welcome-page__center${
+              hasConversationMessages
+                ? ' welcome-page__center--conversation'
+                : ''
+            }`}
+          >
             <WelcomeChatContent
               messages={messages}
               historyLoading={historyLoading}

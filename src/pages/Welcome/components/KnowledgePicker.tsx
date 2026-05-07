@@ -132,7 +132,7 @@ const KnowledgePicker = ({
       content={panel}
       overlayClassName="welcome-page__kb-popover"
       align={{ offset: [0, 10] }}
-      destroyTooltipOnHide
+      destroyOnHidden
     >
       <button type="button" className="welcome-page__kb-trigger">
         <span className="welcome-page__kb-trigger-label">

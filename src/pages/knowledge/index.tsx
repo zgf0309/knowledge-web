@@ -172,8 +172,7 @@ const KnowledgePage = () => {
   };
 
   const handleSubmitTags = async () => {
-    const values = await tagForm.validateFields();
-    console.log('tagForm===>', values);
+    await tagForm.validateFields();
     messageApi.warning('标签更新接口暂未接入');
   };
 

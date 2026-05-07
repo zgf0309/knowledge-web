@@ -23,12 +23,13 @@ export const useChatSession = () => {
     undefined,
   );
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
+  const [historyEnabled, setHistoryEnabled] = useState(false);
   const [sending, setSending] = useState(false);
 
   const historyQuery = useQuery({
     queryKey: ['ChatConversationMessages', conversationId],
     queryFn: () => queryConversationMessages(conversationId as string),
-    enabled: !!conversationId,
+    enabled: !!conversationId && historyEnabled,
     select: (raw) => normalizeMessages(raw),
   });
 
@@ -54,11 +55,13 @@ export const useChatSession = () => {
   const resetSession = useCallback(() => {
     setConversationId(undefined);
     setMessages([]);
+    setHistoryEnabled(false);
   }, []);
 
   const loadConversation = useCallback(async (id: string) => {
     setConversationId(id);
     setMessages([]);
+    setHistoryEnabled(true);
   }, []);
 
   const ensureConversation = useCallback(
@@ -80,6 +83,7 @@ export const useChatSession = () => {
       }
 
       setConversationId(nextConversationId);
+      setHistoryEnabled(false);
       return nextConversationId as string;
     },
     [conversationId, createConversation],
@@ -125,6 +129,7 @@ export const useChatSession = () => {
         const reply = await sendChatMessage(
           cid,
           {
+            tenant_id: input.tenantId,
             content,
             stream: true,
           },

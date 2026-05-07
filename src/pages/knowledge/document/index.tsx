@@ -4,6 +4,7 @@ import { Flex, Modal, message } from 'antd';
 import { useState } from 'react';
 import { useTenantId } from '@/hooks/useTenantId';
 import type { KnowledgeFileRecord } from '../types';
+import AudioDocumentLayout from './components/AudioDocumentLayout';
 import ChunkEditorModal from './components/ChunkEditorModal';
 import DocumentChunkPanel from './components/DocumentChunkPanel';
 import DocumentHeader from './components/DocumentHeader';
@@ -15,6 +16,7 @@ import { useKnowledgeDocumentApi } from './hooks/useKnowledgeDocumentApi';
 import { useKnowledgeDocumentController } from './hooks/useKnowledgeDocumentController';
 import type { KnowledgeChunkItem } from './models';
 import type { ChunkFormValues, InsightFormValues } from './types';
+import { getPlayableAudioUrl, isAudioDocument } from './utils';
 import './index.less';
 
 const DEFAULT_PAGINATION = { current: 1, pageSize: 10 };
@@ -29,6 +31,7 @@ const KnowledgeDocumentPage = () => {
   const tenantId = useTenantId();
   const knowledgeId = record?.knowledge_id ?? '';
   const documentId = record?.document_id ?? '';
+  const isAudio = isAudioDocument(record);
 
   const [pagination] = useState(DEFAULT_PAGINATION);
 
@@ -41,9 +44,11 @@ const KnowledgeDocumentPage = () => {
     documentId,
     pageNo: pagination.current,
     pageSize: pagination.pageSize,
+    enableMdContent: !isAudio,
   });
 
   const controller = useKnowledgeDocumentController({ chunks: api.chunks });
+  const audioUrl = getPlayableAudioUrl(record, api.doc?.location);
 
   const chunkEditor = useEditorModal<ChunkFormValues>({ content: '' });
   const insightEditor = useEditorModal<InsightFormValues>({ content: '' });
@@ -190,14 +195,16 @@ const KnowledgeDocumentPage = () => {
       <DocumentHeader
         title={api.doc?.doc_name ?? record?.doc_name ?? ''}
         documentId={api.doc?.document_id ?? documentId}
+        isAudio={isAudio}
+        audioUrl={audioUrl}
       />
       <Flex style={{ height: 'calc(100vh - 200px)' }} gap={12}>
-        <div className="knowledge-document-page__layout">
-          <DocumentPreviewPanel
-            reportContent={api.reportContent}
-            loading={api.mdcontentQuery.isFetching}
-          />
-          <DocumentChunkPanel
+        {isAudio ? (
+          <AudioDocumentLayout
+            audio={{
+              title: api.doc?.doc_name ?? record?.doc_name ?? '',
+              url: audioUrl,
+            }}
             filteredChunks={controller.filteredChunks}
             pagedChunks={controller.pagedChunks}
             chunkCount={controller.chunks.length}
@@ -207,6 +214,7 @@ const KnowledgeDocumentPage = () => {
             sourceFilter={controller.sourceFilter}
             statusFilter={controller.statusFilter}
             sourceSummary={controller.chunkSourceSummary}
+            visibleInsights={controller.visibleInsights}
             onSearchChange={controller.handleSearchChange}
             onSourceFilterChange={controller.setSourceFilter}
             onStatusFilterChange={controller.setStatusFilter}
@@ -219,15 +227,49 @@ const KnowledgeDocumentPage = () => {
             onToggleChunk={handleToggleChunk}
             onDeleteChunk={handleDeleteChunk}
             onPageChange={controller.setChunkPage}
-            loading={api.chunksQuery.isFetching}
-          />
-          <DocumentInsightPanel
-            visibleInsights={controller.visibleInsights}
             onCreateInsight={handleOpenCreateInsight}
             onEditInsight={handleOpenEditInsight}
             onDeleteInsight={handleDeleteInsight}
+            loading={api.chunksQuery.isFetching}
           />
-        </div>
+        ) : (
+          <div className="knowledge-document-page__layout">
+            <DocumentPreviewPanel
+              reportContent={api.reportContent}
+              loading={api.mdcontentQuery.isFetching}
+            />
+            <DocumentChunkPanel
+              filteredChunks={controller.filteredChunks}
+              pagedChunks={controller.pagedChunks}
+              chunkCount={controller.chunks.length}
+              chunkPage={controller.chunkPage}
+              currentChunkId={controller.currentChunkId}
+              searchKeyword={controller.searchKeyword}
+              sourceFilter={controller.sourceFilter}
+              statusFilter={controller.statusFilter}
+              sourceSummary={controller.chunkSourceSummary}
+              onSearchChange={controller.handleSearchChange}
+              onSourceFilterChange={controller.setSourceFilter}
+              onStatusFilterChange={controller.setStatusFilter}
+              onCreateChunk={() => chunkEditor.openCreate()}
+              onSelectChunk={controller.setActiveChunkId}
+              onEditChunk={(chunk) =>
+                chunkEditor.openEdit(chunk.id, { content: chunk.content })
+              }
+              onCopyChunk={handleCopyChunk}
+              onToggleChunk={handleToggleChunk}
+              onDeleteChunk={handleDeleteChunk}
+              onPageChange={controller.setChunkPage}
+              loading={api.chunksQuery.isFetching}
+            />
+            <DocumentInsightPanel
+              visibleInsights={controller.visibleInsights}
+              onCreateInsight={handleOpenCreateInsight}
+              onEditInsight={handleOpenEditInsight}
+              onDeleteInsight={handleDeleteInsight}
+            />
+          </div>
+        )}
       </Flex>
       <ChunkEditorModal
         open={chunkEditor.open}
