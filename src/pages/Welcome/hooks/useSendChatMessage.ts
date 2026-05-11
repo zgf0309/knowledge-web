@@ -65,14 +65,15 @@ export async function sendChatMessage(
   let fullContent = '';
 
   await fetchEventSource(
-    `/knowledge-api/api/v1/chat/conversations/${conversationId}/messages`,
+    `/knowledge-stream-api/api/v1/chat/conversations/${conversationId}/messages`,
     {
       ...options,
       method: 'POST',
       headers: {
         ...toFetchHeaders(buildAuthHeaders()),
         Accept: 'text/event-stream',
-        // 'Content-Type': 'application/json',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
         ...(options?.headers ?? {}),
       },
       body: JSON.stringify({

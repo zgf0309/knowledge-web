@@ -1,8 +1,4 @@
-import {
-  LogoutOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Spin } from 'antd';
@@ -11,6 +7,7 @@ import React from 'react';
 import { flushSync } from 'react-dom';
 import { outLogin } from '@/services/user/api';
 import HeaderDropdown from '../HeaderDropdown';
+import { StorageKeys, removeLocalStorage } from '@/utils/storage';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -20,7 +17,9 @@ export type GlobalHeaderRightProps = {
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.name}</span>;
+
+  console.log('currentUser====>', currentUser);
+  return <span className="anticon">{currentUser?.name || currentUser?.username || '用户'}</span>;
 };
 
 const useStyles = createStyles(({ token }) => {
@@ -41,30 +40,28 @@ const useStyles = createStyles(({ token }) => {
   };
 });
 
-export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
-  menu,
-  children,
-}) => {
+export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ children }) => {
   /**
    * 退出登录，并且将当前的 url 保存
    */
   const loginOut = async () => {
-    await outLogin();
-    const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
-    const searchParams = new URLSearchParams({
-      redirect: pathname + search,
+    const res: any = await outLogin({
+      id_token_hint: localStorage.getItem(StorageKeys.ACCESS_TOKEN) || '',
+      redirect_url: window.location.origin + window.location.pathname,
     });
-    /** 此方法会跳转到 redirect 参数所在的位置 */
-    const redirect = urlParams.get('redirect');
-    // Note: There may be security issues, please note
-    if (window.location.pathname !== '/user/login' && !redirect) {
-      history.replace({
-        pathname: '/user/login',
-        search: searchParams.toString(),
+    console.log('res123======>', res);
+    const { code, data } = res;
+    if (code === 200) {
+      flushSync(() => {
+        setInitialState((s) => ({ ...s, currentUser: undefined }));
       });
+      removeLocalStorage(StorageKeys.CURRENT_USER);
+      removeLocalStorage(StorageKeys.ACCESS_TOKEN);
+      removeLocalStorage(StorageKeys.REFRESH_TOKEN);
+      window.location.href = data?.logout_url;
     }
   };
+
   const { styles } = useStyles();
 
   const { initialState, setInitialState } = useModel('@@initialState');
@@ -72,9 +69,6 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   const onMenuClick: MenuProps['onClick'] = (event) => {
     const { key } = event;
     if (key === 'logout') {
-      flushSync(() => {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
-      });
       loginOut();
       return;
     }
@@ -99,27 +93,10 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser) {
     return loading;
   }
   const menuItems = [
-    ...(menu
-      ? [
-          {
-            key: 'center',
-            icon: <UserOutlined />,
-            label: '个人中心',
-          },
-          {
-            key: 'settings',
-            icon: <SettingOutlined />,
-            label: '个人设置',
-          },
-          {
-            type: 'divider' as const,
-          },
-        ]
-      : []),
     {
       key: 'logout',
       icon: <LogoutOutlined />,

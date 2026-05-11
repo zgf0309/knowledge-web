@@ -4,11 +4,10 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import ReactQueryProvider from '@/ReactQueryProvider';
 import '@ant-design/v5-patch-for-react-19';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history } from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import { useEffect } from 'react';
-import {StorageKeys, getLocalStorage, setLocalStorage  } from './utils/storage';
+import { StorageKeys, getLocalStorage, setLocalStorage } from './utils/storage';
 import { ssoCallback } from '@/services/user/api';
 import { redirectToLogin, clearRedirectFlag } from './utils/redirectUrl';
 console.log('defaultSettings in app.tsx=====>', defaultSettings);
@@ -35,9 +34,39 @@ const getWindowObject = () => {
   return window as WujieWindow;
 };
 const isDev = process.env.NODE_ENV === 'development';
-const loginPath = '/user/login';
 
 const fallbackPrimaryColor = '#1677ff';
+
+const normalizeCurrentUser = (userInfo: unknown): API.CurrentUser | undefined => {
+  if (!userInfo) {
+    return undefined;
+  }
+
+  let currentUser = userInfo;
+  if (typeof currentUser === 'string') {
+    try {
+      currentUser = JSON.parse(currentUser);
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (typeof currentUser !== 'object' || currentUser === null) {
+    return undefined;
+  }
+
+  const user = currentUser as API.CurrentUser;
+  const name = user.name || user.nickname || user.username || user.preferred_username;
+  const username = user.username || user.preferred_username || user.nickname || user.name;
+  const avatar = user.avatar || user.picture;
+
+  return {
+    ...user,
+    name,
+    username,
+    avatar,
+  };
+};
 
 type RuntimeLayoutSettings = Partial<LayoutSettings> & {
   colorPrimary?: string;
@@ -116,9 +145,11 @@ export async function getInitialState(): Promise<{
   const accessToken = getLocalStorage(StorageKeys.ACCESS_TOKEN);
   console.log('accessToken in getInitialState=====>', accessToken);
   if (accessToken) {
-    const userInfo: any = getLocalStorage(StorageKeys.CURRENT_USER);
+    const userInfo = getLocalStorage(StorageKeys.CURRENT_USER);
+    console.log('userInfo in getInitialState=====>', userInfo);
     return {
-      currentUser: userInfo ? JSON.parse(userInfo) : undefined,
+      fetchUserInfo,
+      currentUser: normalizeCurrentUser(userInfo),
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   } else {
@@ -129,8 +160,8 @@ export async function getInitialState(): Promise<{
       // 登录成功回调，清除跳转锁
       const userInfo: any = await fetchUserInfo(code, state);
       if (userInfo) {
-        const currentUser = userInfo?.user_info;
-        setLocalStorage(StorageKeys.CURRENT_USER, userInfo?.user_info || '');
+        const currentUser = normalizeCurrentUser(userInfo?.user_info);
+        setLocalStorage(StorageKeys.CURRENT_USER, currentUser || '');
         setLocalStorage(StorageKeys.ACCESS_TOKEN, userInfo?.access_token || '');
         // 登录失败，清除跳转锁
         clearRedirectFlag();
@@ -151,10 +182,11 @@ export async function getInitialState(): Promise<{
        // 登录失败，清除跳转锁
       clearRedirectFlag();
       const user = getLocalStorage(StorageKeys.CURRENT_USER) || null;
+      console.log('user====>', user);
       if (user) {
         return {
           fetchUserInfo,
-          currentUser: user,
+          currentUser: normalizeCurrentUser(user),
           settings: defaultSettings as Partial<LayoutSettings>,
         };
       } else {
@@ -184,7 +216,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       setLocalStorage(StorageKeys.REFRESH_TOKEN, props.refresh_token);
     }
     if (props?.userInfo) {
-      setLocalStorage(StorageKeys.CURRENT_USER, JSON.stringify(props.userInfo));
+      setLocalStorage(StorageKeys.CURRENT_USER, normalizeCurrentUser(props.userInfo) || props.userInfo);
     }
     if (currentWindow?.$wujie) {
       const bus = currentWindow?.$wujie?.bus;
@@ -200,7 +232,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
               ...(defaultSettings as Partial<LayoutSettings>),
               ...(data?.settings ?? {}),
             },
-            currentUser: data?.userInfo,
+            currentUser: normalizeCurrentUser(data?.userInfo),
           }));
         });
       }

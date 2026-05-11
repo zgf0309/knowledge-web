@@ -32,6 +32,20 @@ export default {
       target: 'http://127.0.0.1:8010',
       changeOrigin: true,
       pathRewrite: { '^/knowledge-api': '' },
+      selfHandleResponse: false,
+      proxyTimeout: 0,
+      timeout: 0,
+      onProxyReq(proxyReq) {
+        proxyReq.setHeader('Accept', 'text/event-stream');
+        proxyReq.setHeader('Cache-Control', 'no-cache');
+        proxyReq.setHeader('Connection', 'keep-alive');
+      },
+      onProxyRes(proxyRes) {
+        delete proxyRes.headers['content-length'];
+        proxyRes.headers['cache-control'] = 'no-cache, no-transform';
+        proxyRes.headers['connection'] = 'keep-alive';
+        proxyRes.headers['x-accel-buffering'] = 'no';
+      },
     },
   },
   test: {

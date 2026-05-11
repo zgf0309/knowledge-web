@@ -21,5 +21,9 @@ declare namespace API {
     };
     address?: string;
     phone?: string;
+    username?: string;
+    nickname?: string;
+    preferred_username?: string;
+    picture?: string;
   };
 }
