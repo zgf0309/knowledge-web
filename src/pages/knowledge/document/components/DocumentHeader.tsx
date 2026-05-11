@@ -13,16 +13,26 @@ interface DocumentHeaderProps {
   title: string;
   documentId: string;
   isAudio?: boolean;
+  isImage?: boolean;
   audioUrl?: string;
+  fileUrl?: string;
 }
 
 const DocumentHeader = ({
   title,
   documentId,
   isAudio,
+  isImage,
   audioUrl,
+  fileUrl,
 }: DocumentHeaderProps) => {
   const navigate = useNavigate();
+  const downloadUrl = fileUrl || audioUrl;
+  const downloadLabel = isAudio
+    ? '下载音频'
+    : isImage
+      ? '下载原图'
+      : '下载原文';
 
   return (
     <Flex
@@ -42,10 +52,10 @@ const DocumentHeader = ({
       <Space wrap>
         <Button
           icon={<DownloadOutlined />}
-          href={audioUrl}
-          disabled={isAudio && !audioUrl}
+          href={downloadUrl}
+          disabled={(isAudio || isImage) && !downloadUrl}
         >
-          {isAudio ? '下载音频' : '下载原文'}
+          {downloadLabel}
         </Button>
         <Button icon={<RotateLeftOutlined />}>配置详情</Button>
         <Button icon={<FileSearchOutlined />}>命中测试</Button>

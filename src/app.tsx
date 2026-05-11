@@ -223,7 +223,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       console.log('onPageChange', initialState);
       // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && !getLocalStorage(StorageKeys.ACCESS_TOKEN)) {
-        // redirectToLogin();
+        redirectToLogin();
       }
     },
     bgLayoutImgList: [],

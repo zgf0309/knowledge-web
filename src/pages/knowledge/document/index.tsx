@@ -10,13 +10,19 @@ import DocumentChunkPanel from './components/DocumentChunkPanel';
 import DocumentHeader from './components/DocumentHeader';
 import DocumentInsightPanel from './components/DocumentInsightPanel';
 import DocumentPreviewPanel from './components/DocumentPreviewPanel';
+import ImageDocumentLayout from './components/ImageDocumentLayout';
 import InsightEditorModal from './components/InsightEditorModal';
 import { useEditorModal } from './hooks/useEditorModal';
 import { useKnowledgeDocumentApi } from './hooks/useKnowledgeDocumentApi';
 import { useKnowledgeDocumentController } from './hooks/useKnowledgeDocumentController';
 import type { KnowledgeChunkItem } from './models';
 import type { ChunkFormValues, InsightFormValues } from './types';
-import { getPlayableAudioUrl, isAudioDocument } from './utils';
+import {
+  getPlayableAudioUrl,
+  getPreviewImageUrl,
+  isAudioDocument,
+  isImageDocument,
+} from './utils';
 import './index.less';
 
 const DEFAULT_PAGINATION = { current: 1, pageSize: 10 };
@@ -32,6 +38,7 @@ const KnowledgeDocumentPage = () => {
   const knowledgeId = record?.knowledge_id ?? '';
   const documentId = record?.document_id ?? '';
   const isAudio = isAudioDocument(record);
+  const isImage = isImageDocument(record);
 
   const [pagination] = useState(DEFAULT_PAGINATION);
 
@@ -44,11 +51,15 @@ const KnowledgeDocumentPage = () => {
     documentId,
     pageNo: pagination.current,
     pageSize: pagination.pageSize,
-    enableMdContent: !isAudio,
+    enableMdContent: !isAudio && !isImage,
   });
 
   const controller = useKnowledgeDocumentController({ chunks: api.chunks });
   const audioUrl = getPlayableAudioUrl(record, api.doc?.location);
+  const imageUrl = getPreviewImageUrl(record, api.doc?.location);
+  const currentChunk = controller.chunks.find(
+    (item) => item.id === controller.currentChunkId,
+  );
 
   const chunkEditor = useEditorModal<ChunkFormValues>({ content: '' });
   const insightEditor = useEditorModal<InsightFormValues>({ content: '' });
@@ -196,7 +207,9 @@ const KnowledgeDocumentPage = () => {
         title={api.doc?.doc_name ?? record?.doc_name ?? ''}
         documentId={api.doc?.document_id ?? documentId}
         isAudio={isAudio}
+        isImage={isImage}
         audioUrl={audioUrl}
+        fileUrl={imageUrl}
       />
       <Flex style={{ height: 'calc(100vh - 200px)' }} gap={12}>
         {isAudio ? (
@@ -231,6 +244,25 @@ const KnowledgeDocumentPage = () => {
             onEditInsight={handleOpenEditInsight}
             onDeleteInsight={handleDeleteInsight}
             loading={api.chunksQuery.isFetching}
+          />
+        ) : isImage ? (
+          <ImageDocumentLayout
+            image={{
+              title: api.doc?.doc_name ?? record?.doc_name ?? '',
+              url: imageUrl,
+            }}
+            currentChunk={currentChunk}
+            chunkCount={controller.chunks.length}
+            visibleInsights={controller.visibleInsights}
+            onCreateChunk={() => chunkEditor.openCreate()}
+            onEditChunk={(chunk) =>
+              chunkEditor.openEdit(chunk.id, { content: chunk.content })
+            }
+            onCopyChunk={handleCopyChunk}
+            onToggleChunk={handleToggleChunk}
+            onCreateInsight={handleOpenCreateInsight}
+            onEditInsight={handleOpenEditInsight}
+            onDeleteInsight={handleDeleteInsight}
           />
         ) : (
           <div className="knowledge-document-page__layout">

@@ -26,29 +26,25 @@ export default {
    * @doc https://github.com/chimurai/http-proxy-middleware
    */
   dev: {
-    // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    '/knowledge-api/api/': {
-      target: 'http://192.168.188.212:8000',
+    // 统一代理所有后端请求：/knowledge-api/** -> http://127.0.0.1:8010/**
+    // 使用 127.0.0.1 避免部分环境 localhost 解析到 IPv6 导致代理失败。
+    '/knowledge-api/': {
+      target: 'http://127.0.0.1:8010',
       changeOrigin: true,
-      pathRewrite: { '^/knowledge-app/api': '/api' },
-    },
-    '/knowledge-api/ai/': {
-      target: 'http://192.168.188.212:8000',
-      changeOrigin: true,
-      pathRewrite: { '^/knowledge-api/ai': '/ai' },
+      pathRewrite: { '^/knowledge-api': '' },
     },
   },
   test: {
     // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
     '/api/': {
-      target: 'http://192.168.188.212:8000',
+      target: 'http://127.0.0.1:8010',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },
   },
   pre: {
     '/api/': {
-      target: 'http://192.168.188.212:8000',
+      target: 'http://127.0.0.1:8010',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

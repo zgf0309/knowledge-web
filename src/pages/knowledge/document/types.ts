@@ -33,6 +33,11 @@ export interface AudioSourceInfo {
   url?: string;
 }
 
+export interface ImageSourceInfo {
+  title: string;
+  url?: string;
+}
+
 export interface InsightEditorModalProps {
   open: boolean;
   editingInsightId: string | null;

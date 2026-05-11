@@ -23,6 +23,7 @@ export const getChunkSourceSummary = (
 });
 
 const AUDIO_EXTENSIONS = new Set(['wav', 'mp3', 'pcm', 'm4a', 'amr']);
+const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp']);
 
 const getFileExtension = (value?: string | null) => {
   const normalized = String(value ?? '')
@@ -47,7 +48,22 @@ export const isAudioDocument = (record?: KnowledgeFileRecord | null) => {
   );
 };
 
-export const getPlayableAudioUrl = (
+export const isImageDocument = (record?: KnowledgeFileRecord | null) => {
+  if (!record) return false;
+  const category = String(record.doc_category ?? '').toLowerCase();
+  const docType = String(record.doc_type ?? '').toLowerCase();
+  const nameExtension = getFileExtension(record.doc_name);
+  const locationExtension = getFileExtension(record.location);
+
+  return (
+    category === 'image' ||
+    IMAGE_EXTENSIONS.has(docType) ||
+    IMAGE_EXTENSIONS.has(nameExtension) ||
+    IMAGE_EXTENSIONS.has(locationExtension)
+  );
+};
+
+const getPreviewableFileUrl = (
   record?: KnowledgeFileRecord | null,
   fallbackLocation?: string,
 ) => {
@@ -62,3 +78,6 @@ export const getPlayableAudioUrl = (
 
   return undefined;
 };
+
+export const getPlayableAudioUrl = getPreviewableFileUrl;
+export const getPreviewImageUrl = getPreviewableFileUrl;
