@@ -1,10 +1,11 @@
 // https://umijs.org/config/
 
-import { defineConfig } from '@umijs/max';
 import { join } from 'node:path';
+import { defineConfig } from '@umijs/max';
 import defaultSettings from './defaultSettings';
 import proxy from './proxy';
 import routes from './routes';
+
 const { REACT_APP_ENV = 'dev' } = process.env;
 /**
  * @name 使用公共路径
@@ -141,12 +142,6 @@ export default defineConfig({
   mock: {
     include: ['mock/**/*', 'src/pages/**/_mock.ts'],
   },
-  /**
-   * @name 是否开启 mako
-   * @description 使用 mako 极速研发
-   * @doc https://umijs.org/docs/api/config#mako
-   */
-  mako: {},
   esbuildMinifyIIFE: true,
   requestRecord: {},
   exportStatic: {},

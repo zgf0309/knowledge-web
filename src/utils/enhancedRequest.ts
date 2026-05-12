@@ -1,7 +1,6 @@
 import type { RequestOptions } from '@@/plugin-request/request';
 import { request as umiRequest } from '@umijs/max';
 import { message } from 'antd';
-import { getTenantIdFromStorage } from '@/hooks/useTenantId';
 import {
   getLocalStorage,
   removeLocalStorage,
@@ -93,12 +92,9 @@ const createRequestOptions = (
     ...(options.headers as Record<string, HeaderValue> | undefined),
   };
   const accessToken = getStoredAccessToken();
-
   if (accessToken) {
-    const tenantId = getTenantIdFromStorage();
     headers.token = accessToken;
     headers.Authorization = `Bearer ${accessToken}`;
-    headers.tenant_id = tenantId;
   }
 
   return {

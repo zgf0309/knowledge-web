@@ -17,12 +17,10 @@ import type {
 } from './list/types';
 import './list.less';
 import { useQuery } from '@tanstack/react-query';
-import { useTenantId } from '@/hooks/useTenantId';
 import { delKnowledgeList, queryKnowledgeList } from '@/services/knowledge/api';
 
 const KnowledgeListPage = () => {
   const emptyRecords = useMemo<KnowledgeBaseRecord[]>(() => [], []);
-  const tenantId = useTenantId();
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -55,13 +53,11 @@ const KnowledgeListPage = () => {
       pagination,
       searchKeyword,
       selectedGroupKey,
-      tenantId,
     ],
     queryFn: () =>
       queryKnowledgeList({
         knowledge_name: searchKeyword,
         group_id: selectedGroupKey === 'all' ? '' : selectedGroupKey,
-        tenant_id: tenantId,
         scope: undefined,
         page_num: pagination.current,
         page_size: pagination.pageSize,
@@ -150,7 +146,6 @@ const KnowledgeListPage = () => {
       onOk: async () => {
         const res: any = await delKnowledgeList({
           knowledge_id: keys[0],
-          tenant_id: tenantId,
         });
         if (res?.code === 200) {
           setSelectedRowKeys([]);
@@ -248,7 +243,6 @@ const KnowledgeListPage = () => {
           <Flex align="flex-start" gap={10}>
             {!sidebarCollapsed ? (
               <KnowledgeGroupManager
-                tenantId={tenantId}
                 selectedGroupKey={selectedGroupKey}
                 onSelectGroup={handleSelectGroup}
                 onCurrentGroupTitleChange={setCurrentGroupTitle}

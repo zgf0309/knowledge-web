@@ -3,15 +3,19 @@
 import { request } from '@/utils/enhancedRequest';
 import { s } from 'nuqs/dist/context-BE-tNWKb';
 
+const omitTenantId = <T extends Record<string, any> | undefined>(params: T) => {
+  if (!params) return {};
+  const rest = { ...params };
+  delete rest[['tenant', 'id'].join('_')];
+  return rest;
+};
 
 /**
  * 查询知识库分组（知识树）列表
- * @param params.tenant_id 租户 ID
  * @param params.name 分组名称（可选，用于过滤）
  */
 export async function queryKnowledgeGroup(
   params: {
-    tenant_id?: string;
     name?: string;
   },
   options?: { [key: string]: any },
@@ -19,7 +23,7 @@ export async function queryKnowledgeGroup(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -41,7 +45,7 @@ export async function addKnowledgeTree(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
     method: 'POST',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -64,7 +68,7 @@ export async function updateKnowledgeTree(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/group', {
     method: 'PUT',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   }); 
@@ -88,12 +92,10 @@ export async function getKnowledgeGroupInfo(
 
 /**
  * 删除知识库分组节点
- * @param params.tenant_id 租户 ID
  * @param params.group_id 要删除的分组 ID
  */
 export async function delKnowledgeTree(
   params: {
-    tenant_id?: string;
     group_id?: string;
   },
   options?: { [key: string]: any },
@@ -101,7 +103,7 @@ export async function delKnowledgeTree(
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/group`, {
     method: 'DELETE',
     data: { 
-      ...params 
+      ...omitTenantId(params) 
     },
     ...(options || {}),
   });
@@ -109,7 +111,6 @@ export async function delKnowledgeTree(
 
 /**
  * 查询知识库列表（支持分页、排序、过滤）
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_name 知识库名称（模糊查询）
  * @param params.group_id 所属分组 ID
  * @param params.user_id 归属用户 ID
@@ -122,7 +123,6 @@ export async function delKnowledgeTree(
  */
 export async function queryKnowledgeList(
   params: {
-    tenant_id?: string;
     knowledge_name?: string;
     group_id?: string;
     user_id?: string;
@@ -138,7 +138,7 @@ export async function queryKnowledgeList(
   return request<any>('/knowledge-api/api/v1/ai/knowledge', {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -146,7 +146,6 @@ export async function queryKnowledgeList(
 
 /**
  * 创建知识库
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_name 知识库名称
  * @param params.group_id 归属分组 ID
  * @param params.user_id 创建者用户 ID
@@ -154,7 +153,6 @@ export async function queryKnowledgeList(
  */
 export async function addKnowledgeList(
   params: {
-    tenant_id?: string;
     knowledge_name?: string;
     group_id?: string;
     user_id?: string;
@@ -170,7 +168,7 @@ export async function addKnowledgeList(
   return request<any>('/knowledge-api/api/v1/ai/knowledge', {
     method: 'POST',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -178,12 +176,10 @@ export async function addKnowledgeList(
 
 /**
  * 删除知识库
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 要删除的知识库 ID
  */
 export async function delKnowledgeList(
   params: {
-    tenant_id?: string;
     knowledge_id?: string;
   },
   options?: { [key: string]: any },
@@ -191,7 +187,7 @@ export async function delKnowledgeList(
   return request<any>(`/knowledge-api/api/v1/ai/knowledge`, {
     method: 'DELETE',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -199,7 +195,6 @@ export async function delKnowledgeList(
 
 /**
  * 查询知识库下的文档列表
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 知识库 ID
  * @param params.document_name 文档名称（模糊查询）
  * @param params.status 文档状态（如 available / processing）
@@ -208,7 +203,6 @@ export async function delKnowledgeList(
  */
 export async function queryKnowledgeDocList(
   params: {
-    tenant_id?: string;
     knowledge_id?: string;
     document_name?: string;
     status?: string;
@@ -220,7 +214,7 @@ export async function queryKnowledgeDocList(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc', {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -228,14 +222,12 @@ export async function queryKnowledgeDocList(
 
 /**
  * 按文件类型导入文档到知识库
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 目标知识库 ID
  * @param params.documents 待导入的文档列表
  * @param params.doc_category 文档分类（如 text / table / image / audio / web）
  */
 export async function addKnowledgeDoc(
   params: {
-    tenant_id?: string;
     knowledge_id: string;
     documents: Array<Record<string, any>>;
     doc_category: string;
@@ -245,7 +237,7 @@ export async function addKnowledgeDoc(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/import', {
     method: 'POST',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -253,13 +245,11 @@ export async function addKnowledgeDoc(
 
 /**
  * 按模板导入文档到知识库（如简历 / 论文 / 问答对 等模板）
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 目标知识库 ID
  * @param params.documents 待导入的文档列表
  */
 export async function addKnowledgeDocTemplate(
   params: {
-    tenant_id?: string;
     knowledge_id: string;
     documents: Array<Record<string, any>>;
   },
@@ -268,7 +258,7 @@ export async function addKnowledgeDocTemplate(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/import-template', {
     method: 'POST',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -276,12 +266,10 @@ export async function addKnowledgeDocTemplate(
 
 /**
  * 删除知识库下的文档（支持批量）
- * @param params.tenant_id 租户 ID
  * @param params.doc_ids 要删除的文档 ID，多个以逗号分隔
  */
 export async function delKnowledgeDoc(
   params: {
-    tenant_id?: string;
     doc_ids?: string;
   },
   options?: { [key: string]: any },
@@ -289,7 +277,7 @@ export async function delKnowledgeDoc(
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/doc`, {
     method: 'DELETE',
     data: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -297,13 +285,11 @@ export async function delKnowledgeDoc(
 
 /**
  * 启动文档解析（运行解析/切片/向量化流程）
- * @param params.tenant_id 租户 ID
  * @param params.doc_ids 要运行解析的文档 ID 列表
  * @param params.force 是否强制重新解析已完成的文档
  */
 export async function runKnowledgeDoc(
   params: {
-    tenant_id?: string;
     doc_ids?: string[];
     force: boolean;
   },
@@ -311,38 +297,34 @@ export async function runKnowledgeDoc(
 ) {
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/doc/run`, {
     method: 'POST',
-    data: { ...params },
+    data: { ...omitTenantId(params) },
     ...(options || {}),
   })
 }
 
 /**
  * 停止文档解析任务
- * @param params.tenant_id 租户 ID
  * @param params.doc_ids 要停止的文档 ID 列表
  */
 export async function stopKnowledgeDoc(
   params: {
-    tenant_id?: string;
     doc_ids?: string[];
   },
   options?: { [key: string]: any },
 ) {
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/doc/stop`, {
     method: 'POST',
-    data: { ...params },
+    data: { ...omitTenantId(params) },
     ...(options || {}),
   })
 }
 
 /**
  * 获取文档对应的 Markdown 源内容（用于预览原文）
- * @param params.tenant_id 租户 ID
  * @param params.object_key 对象存储中的文件 key
  */
 export async function queryKnowledgeDocMdcontent(
   params: {
-    tenant_id?: string;
     object_key?: string;
   },
   options?: { [key: string]: any },
@@ -350,7 +332,7 @@ export async function queryKnowledgeDocMdcontent(
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/mdcontent`, {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -358,7 +340,6 @@ export async function queryKnowledgeDocMdcontent(
 
 /**
  * 分页查询文档的切片（chunk）列表
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 知识库 ID
  * @param params.document_id 文档 ID
  * @param params.page_no 页码
@@ -366,7 +347,6 @@ export async function queryKnowledgeDocMdcontent(
  */
 export async function queryKnowledgeDocChunks(
   params: {
-    tenant_id?: string;
     knowledge_id?: string;
     document_id?: string;
     page_no?: number;
@@ -377,7 +357,7 @@ export async function queryKnowledgeDocChunks(
   return request<any>(`/knowledge-api/api/v1/ai/knowledge/doc/chunk`, {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });
@@ -386,7 +366,6 @@ export async function queryKnowledgeDocChunks(
 
 /**
  * 新增自定义切片（chunk）
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 知识库 ID
  * @param params.document_id 文档 ID
  * @param params.content 切片内容
@@ -394,7 +373,6 @@ export async function queryKnowledgeDocChunks(
  */
 export async function addKnowledgeDocCustomChunk(
   params: {
-    tenant_id: string;
     knowledge_id: string;
     document_id: string;
     content: string;
@@ -404,14 +382,13 @@ export async function addKnowledgeDocCustomChunk(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/chunk/custom', {
     method: 'POST',
     data: {
-      ...(params || {}),
+      ...omitTenantId(params),
     },
   });
 }
 
 /**
  * 编辑切片内容（chunk）
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 知识库 ID
  * @param params.document_id 文档 ID
  * @param params.chunk_id 切片 ID
@@ -421,7 +398,6 @@ export async function addKnowledgeDocCustomChunk(
  */
 export async function udpdateKnowledgeDocCustomChunk(
   params: {
-    tenant_id: string;
     knowledge_id: string;
     document_id: string;
     chunk_id: string;
@@ -433,21 +409,19 @@ export async function udpdateKnowledgeDocCustomChunk(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/chunk/edit', {
     method: 'POST',
     data: {
-      ...(params || {}),
+      ...omitTenantId(params),
     },
   });
 }
 
 /**
  * 删除切片（chunk）
- * @param params.tenant_id 租户 ID
  * @param params.knowledge_id 知识库 ID
  * @param params.document_id 文档 ID
  * @param params.chunk_id 切片 ID
  */
 export async function delKnowledgeDocChunk(
   params: {
-    tenant_id: string;
     knowledge_id: string;
     document_id: string;
     chunk_id: string;
@@ -456,14 +430,13 @@ export async function delKnowledgeDocChunk(
   return request<any>('/knowledge-api/api/v1/ai/knowledge/doc/chunk', {
     method: 'DELETE',
     data: {
-      ...(params || {}),
+      ...omitTenantId(params),
     },
   });
 }
 
 /**
    * 切片知识点（insight）
-   * @param params.tenant_id 租户 ID
    * @param params.knowledge_id 知识库 ID
    * @param params.document_id 文档 ID
    * @param params.chunk_id 切片 ID
@@ -472,7 +445,6 @@ export async function delKnowledgeDocChunk(
    */
   export async function optKnowledgeDocCustomInsight(
     params: {
-      tenant_id: string;
       knowledge_id: string;
       document_id: string;
       chunk_id: string;
@@ -483,7 +455,7 @@ export async function delKnowledgeDocChunk(
     return request<any>('/knowledge-api/ai/knowledge/doc/chunk/keyword', {
       method: 'POST',
       data: {
-        ...(params || {}),
+        ...omitTenantId(params),
       },
     });
   }
@@ -502,7 +474,7 @@ export async function queryEmbeddingModels(
   return request<any>('/knowledge-api/api/v1/ai/embedding/models', {
     method: 'GET',
     params: {
-      ...params,
+      ...omitTenantId(params),
     },
     ...(options || {}),
   });

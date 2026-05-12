@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { StorageKeys, getLocalStorage, setLocalStorage } from './utils/storage';
 import { ssoCallback } from '@/services/user/api';
 import { redirectToLogin, clearRedirectFlag } from './utils/redirectUrl';
+import { App as AntdApp } from 'antd';
 console.log('defaultSettings in app.tsx=====>', defaultSettings);
 
 type MicroAppProps = {
@@ -277,9 +278,11 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       // if (initialState?.loading) return <PageLoading />;
       return (
         <>
-        <ReactQueryProvider>
-          {children}
+          <AntdApp>
+            <ReactQueryProvider>
+              {children}
             </ReactQueryProvider>
+          </AntdApp>
           {isDev && (
             <SettingDrawer
               disableUrlParams

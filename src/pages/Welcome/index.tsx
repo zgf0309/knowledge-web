@@ -1,7 +1,6 @@
 import { PageContainer } from '@ant-design/pro-components';
 import { message } from 'antd';
 import { useCallback } from 'react';
-import { useTenantId } from '@/hooks/useTenantId';
 import HistorySidebar from './components/HistorySidebar';
 import QuestionComposer from './components/QuestionComposer';
 import WelcomeChatContent from './components/WelcomeChatContent';
@@ -11,7 +10,6 @@ import './index.less';
 
 const KnowledgeWelcomePage = () => {
   const [messageApi, messageContextHolder] = message.useMessage();
-  const tenantId = useTenantId();
   const {
     historyCollapsed,
     conversations,
@@ -50,7 +48,6 @@ const KnowledgeWelcomePage = () => {
       const nextConversationId = await submitQuestion({
         content,
         kbId: knowledgeId,
-        tenantId,
       });
 
       setQuestion('');
@@ -69,7 +66,6 @@ const KnowledgeWelcomePage = () => {
     question,
     setQuestion,
     submitQuestion,
-    tenantId,
   ]);
 
   const handleNewConversation = useCallback(() => {
@@ -118,7 +114,6 @@ const KnowledgeWelcomePage = () => {
               value={question}
               onChange={setQuestion}
               onSubmit={handleSubmit}
-              tenantId={tenantId}
               knowledgeId={knowledgeId}
               onKnowledgeChange={setKnowledgeId}
               disabled={creating || sending}

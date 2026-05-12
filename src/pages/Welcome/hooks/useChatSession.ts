@@ -15,7 +15,6 @@ import { sendChatMessage } from './useSendChatMessage';
 interface SubmitQuestionInput {
   content: string;
   kbId: string;
-  tenantId: string;
 }
 
 export const useChatSession = () => {
@@ -43,11 +42,8 @@ export const useChatSession = () => {
   }, [conversationId, historyQuery.data, historyQuery.isFetched]);
 
   const createMutation = useMutation({
-    mutationFn: (variables: {
-      kb_id: string;
-      title: string;
-      tenant_id?: string;
-    }) => apiCreateConversation(variables),
+    mutationFn: (variables: { kb_id: string; title: string }) =>
+      apiCreateConversation(variables),
   });
   const { isPending: creating, mutateAsync: createConversation } =
     createMutation;
@@ -65,13 +61,12 @@ export const useChatSession = () => {
   }, []);
 
   const ensureConversation = useCallback(
-    async ({ content, kbId, tenantId }: SubmitQuestionInput) => {
+    async ({ content, kbId }: SubmitQuestionInput) => {
       if (conversationId) return conversationId;
 
       const res = await createConversation({
         kb_id: kbId,
         title: content.slice(0, 20) || '新对话',
-        tenant_id: tenantId,
       });
       const nextConversationId =
         (res as any)?.data?.conversation_id ??
@@ -129,7 +124,6 @@ export const useChatSession = () => {
         const reply = await sendChatMessage(
           cid,
           {
-            tenant_id: input.tenantId,
             content,
             stream: true,
           },

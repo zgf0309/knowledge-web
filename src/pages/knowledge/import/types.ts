@@ -4,7 +4,6 @@ import type { ImportConfig, ImportFileType } from '../types';
 
 export interface ImportFormValues extends ImportConfig {
 	// 租户 ID（提交时由上下文注入）。
-	tenant_id?: string;
 	// 待上传的本地文件列表。
 	pendingFiles: UploadFile[];
 	// 网页批量导入模式下上传的 Excel 文件。

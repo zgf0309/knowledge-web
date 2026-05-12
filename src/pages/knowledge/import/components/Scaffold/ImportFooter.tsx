@@ -22,13 +22,11 @@ export const ImportFooter = ({
   onSubmit,
 }: ImportFooterProps) => {
   const navigate = useNavigate();
-  const { tenantId, formValues, setTargetKnowledgeId } = useImportContext();
+  const { formValues, setTargetKnowledgeId } = useImportContext();
 
   const createdKnowledgeList = async (submitType: 'import' | 'add') => {
     try {
-      const res: any = await addKnowledgeList(
-        buildCreateKnowledgePayload(formValues, tenantId),
-      );
+      const res: any = await addKnowledgeList(buildCreateKnowledgePayload(formValues));
       const { code, data } = res;
       if (code === 200) {
         setTargetKnowledgeId(data?.knowledge_id ?? data?.id ?? '');

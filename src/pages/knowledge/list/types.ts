@@ -19,7 +19,6 @@ export interface KnowledgeBaseRecord {
 	language: string;
 	scope: number | null;
 	status: string;
-	tenant_id: string;
 	create_date: string;
 	create_time: string;
 }
@@ -30,7 +29,6 @@ export interface KnowledgeFormValues {
 	language: string;
 	scope: number | null;
 	status: string;
-	tenant_id: string;
 	create_date: string;
 	create_time: string;
 }

@@ -22,7 +22,6 @@ import KnowledgeGroupTree from './KnowledgeGroupTree';
 type GroupModalMode = 'add' | 'edit';
 
 interface KnowledgeGroupManagerProps {
-	tenantId?: string;
 	selectedGroupKey: string;
 	onSelectGroup: (groupKey: string) => void;
 	onCurrentGroupTitleChange: (title: string) => void;
@@ -30,7 +29,6 @@ interface KnowledgeGroupManagerProps {
 }
 
 const KnowledgeGroupManager = ({
-	tenantId,
 	selectedGroupKey,
 	onSelectGroup,
 	onCurrentGroupTitleChange,
@@ -49,11 +47,10 @@ const KnowledgeGroupManager = ({
 	const [groupForm] = Form.useForm<GroupFormValues>();
 
 	const { data, isLoading, refetch: refetchKnowledgeGroup } = useQuery({
-		queryKey: ['KnowledgeTree', groupKeyword, tenantId],
+		queryKey: ['KnowledgeTree', groupKeyword],
 		queryFn: () =>
 			queryKnowledgeGroup({
 				name: groupKeyword,
-				tenant_id: tenantId,
 			}),
 		select: (s: any) => s.data,
 	});
@@ -139,7 +136,6 @@ const KnowledgeGroupManager = ({
 		const payload = {
 			name: values.name.trim(),
 			description: values.description?.trim(),
-      tenant_id: tenantId,
 		};
 
 		const request =
@@ -188,7 +184,6 @@ const KnowledgeGroupManager = ({
 			okButtonProps: { danger: true },
 			onOk: async () => {
 				const params = {
-					tenant_id: tenantId,
 					group_id: groupId,
 				};
 				await delKnowledgeTree(params)

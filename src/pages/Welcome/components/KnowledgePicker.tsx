@@ -12,7 +12,6 @@ import {
 import type { KnowledgeItem } from '../types';
 
 interface KnowledgePickerProps {
-  tenantId: string;
   value?: string;
   onChange: (id: string | undefined, item?: KnowledgeItem) => void;
   placeholder?: string;
@@ -44,13 +43,12 @@ const KnowledgeCard = ({ item, active, onSelect }: KnowledgeCardProps) => (
 );
 
 const KnowledgePicker = ({
-  tenantId,
   value,
   onChange,
   placeholder = '选择知识库',
 }: KnowledgePickerProps) => {
   const [open, setOpen] = useState(false);
-  const picker = useKnowledgePicker({ tenantId, value, open });
+  const picker = useKnowledgePicker({ value, open });
 
   const handleSelect = (item: KnowledgeItem) => {
     onChange(item.knowledge_id, item);

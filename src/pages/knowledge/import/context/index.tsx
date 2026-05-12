@@ -6,7 +6,6 @@ import type { FormInstance } from 'antd/es/form';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useTenantId } from '@/hooks/useTenantId';
 import {
   queryEmbeddingModels,
   queryKnowledgeGroup,
@@ -28,7 +27,6 @@ interface ImportLocationState {
 }
 
 interface ImportContextValue {
-  tenantId: string;
   pageType: ImportPageType;
   targetKnowledgeId: string;
   setTargetKnowledgeId: Dispatch<SetStateAction<string>>;
@@ -55,7 +53,6 @@ export const ImportContextProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const tenantId = useTenantId();
   const navigate = useNavigate();
   const location = useLocation();
   const locationType = location.state as ImportLocationState | undefined;
@@ -83,11 +80,8 @@ export const ImportContextProvider = ({
   });
 
   const { data: knowledgeTree } = useQuery({
-    queryKey: ['KnowledgeTree', tenantId],
-    queryFn: () =>
-      queryKnowledgeGroup({
-        tenant_id: tenantId,
-      }),
+    queryKey: ['KnowledgeTree'],
+    queryFn: () => queryKnowledgeGroup({}),
     select: (response: any) => response.data,
   });
 
@@ -140,7 +134,6 @@ export const ImportContextProvider = ({
 
   const contextValue = useMemo<ImportContextValue>(
     () => ({
-      tenantId,
       pageType,
       targetKnowledgeId,
       setTargetKnowledgeId,
@@ -160,7 +153,6 @@ export const ImportContextProvider = ({
       goToTargetKnowledge,
     }),
     [
-      tenantId,
       pageType,
       targetKnowledgeId,
       form,

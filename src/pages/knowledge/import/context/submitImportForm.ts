@@ -25,7 +25,6 @@ import type { ImportFormValues } from '../types';
 interface SubmitImportFormParams {
   form: FormInstance<ImportFormValues>;
   targetKnowledgeId: string;
-  tenantId: string;
   messageApi: MessageInstance;
   goToTargetKnowledge: () => void;
 }
@@ -33,19 +32,16 @@ interface SubmitImportFormParams {
 const submitDocuments = async (
   targetKnowledgeId: string,
   values: ImportFormValues,
-  tenantId?: string,
 ) => {
   // 按模板导入时，使用模板专用接口和字段结构。
   const response: any =
     values.mode === 'byTemplate'
-      ? await addKnowledgeDocTemplate({
-          ...buildImportTemplateDocumentsPayload(targetKnowledgeId, values),
-          tenant_id: tenantId,
-        })
-      : await addKnowledgeDoc({
-          ...buildImportDocumentsPayload(targetKnowledgeId, values),
-          tenant_id: tenantId,
-        });
+      ? await addKnowledgeDocTemplate(
+          buildImportTemplateDocumentsPayload(targetKnowledgeId, values),
+        )
+      : await addKnowledgeDoc(
+          buildImportDocumentsPayload(targetKnowledgeId, values),
+        );
 
   if (response?.code && response.code !== 200) {
     throw new Error(response?.msg || '导入失败，请稍后重试');
@@ -55,7 +51,6 @@ const submitDocuments = async (
 export const submitImportForm = async ({
   form,
   targetKnowledgeId,
-  tenantId,
   messageApi,
   goToTargetKnowledge,
 }: SubmitImportFormParams) => {
@@ -118,7 +113,7 @@ export const submitImportForm = async ({
             ...values,
             webUrls: validationResult.urls,
           };
-          await submitDocuments(targetKnowledgeId, normalizedValues, tenantId);
+          await submitDocuments(targetKnowledgeId, normalizedValues);
 
           const importedRecords = normalizedValues.webUrls.map((item) =>
             createRecordFromWebUrl(item, normalizedValues),
@@ -146,7 +141,7 @@ export const submitImportForm = async ({
         ...values,
         webUrls: validationResult.urls,
       };
-      await submitDocuments(targetKnowledgeId, normalizedValues, tenantId);
+      await submitDocuments(targetKnowledgeId, normalizedValues);
 
       const importedRecords = normalizedValues.webUrls.map((item) =>
         createRecordFromWebUrl(item, normalizedValues),
@@ -161,7 +156,7 @@ export const submitImportForm = async ({
       return;
     }
 
-    await submitDocuments(targetKnowledgeId, values, tenantId);
+    await submitDocuments(targetKnowledgeId, values);
     const importedRecords = values.pendingFiles.map((file) =>
       createRecordFromUpload(file, values),
     );

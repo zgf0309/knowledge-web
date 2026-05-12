@@ -1,3 +1,5 @@
+import type { ClientRequest, IncomingMessage } from 'node:http';
+
 /**
  * @name 代理的配置
  * @see 在生产环境 代理是无法生效的，所以这里没有生产环境的配置
@@ -35,12 +37,12 @@ export default {
       selfHandleResponse: false,
       proxyTimeout: 0,
       timeout: 0,
-      onProxyReq(proxyReq) {
+      onProxyReq(proxyReq: ClientRequest) {
         proxyReq.setHeader('Accept', 'text/event-stream');
         proxyReq.setHeader('Cache-Control', 'no-cache');
         proxyReq.setHeader('Connection', 'keep-alive');
       },
-      onProxyRes(proxyRes) {
+      onProxyRes(proxyRes: IncomingMessage) {
         delete proxyRes.headers['content-length'];
         proxyRes.headers['cache-control'] = 'no-cache, no-transform';
         proxyRes.headers['connection'] = 'keep-alive';

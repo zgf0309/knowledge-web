@@ -10,7 +10,6 @@ interface QuestionComposerProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  tenantId: string;
   knowledgeId?: string;
   onKnowledgeChange: (id: string | undefined) => void;
   disabled?: boolean;
@@ -20,7 +19,6 @@ const QuestionComposer = ({
   value,
   onChange,
   onSubmit,
-  tenantId,
   knowledgeId,
   onKnowledgeChange,
   disabled,
@@ -54,7 +52,6 @@ const QuestionComposer = ({
         />
         <div className="welcome-page__composer-actions">
           <KnowledgePicker
-            tenantId={tenantId}
             value={knowledgeId}
             onChange={(id) => onKnowledgeChange(id)}
           />

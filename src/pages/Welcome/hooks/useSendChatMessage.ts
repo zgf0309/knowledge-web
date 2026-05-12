@@ -7,7 +7,6 @@ import {
 import { buildAuthHeaders } from '@/utils/enhancedRequest';
 
 type SendChatMessageData = {
-  tenant_id?: string;
   content: string;
   stream?: boolean;
 };
@@ -65,7 +64,7 @@ export async function sendChatMessage(
   let fullContent = '';
 
   await fetchEventSource(
-    `/knowledge-stream-api/api/v1/chat/conversations/${conversationId}/messages`,
+    `/knowledge-api/api/v1/chat/conversations/${conversationId}/messages`,
     {
       ...options,
       method: 'POST',

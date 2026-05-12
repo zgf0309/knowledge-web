@@ -16,7 +16,6 @@ import type {
 } from './types';
 
 interface CreateKnowledgePayload {
-	tenant_id?: string;
 	knowledge_name: string;
 	description?: string;
 	group_id?: string;
@@ -276,9 +275,7 @@ export const buildImportTemplateDocumentsPayload = (
 
 export const buildCreateKnowledgePayload = (
 	values: Pick<ImportFormValues, 'knowledge_name' | 'description' | 'group_id' | 'embeddingModel'>,
-	tenantId?: string,
 ): CreateKnowledgePayload => compactObject({
-	tenant_id: toOptionalValue(tenantId),
 	knowledge_name: values.knowledge_name.trim(),
 	description: toOptionalValue(values.description?.trim()),
 	group_id: toOptionalValue(values.group_id),

@@ -8,7 +8,6 @@ import { request } from '@/utils/enhancedRequest';
  */
 export async function createConversation(
 	data: {
-		tenant_id?: string;
 		kb_id: string;
 		title: string;
 	},

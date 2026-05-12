@@ -24,7 +24,6 @@ const KnowledgeImportPageContent = () => {
     setCurrentStep,
     messageContextHolder,
     messageApi,
-    tenantId,
     targetKnowledgeId,
     goToTargetKnowledge,
     form,
@@ -38,7 +37,6 @@ const KnowledgeImportPageContent = () => {
     await submitImportForm({
       form,
       targetKnowledgeId,
-      tenantId,
       messageApi,
       goToTargetKnowledge,
     });

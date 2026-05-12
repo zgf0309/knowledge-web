@@ -209,7 +209,6 @@ export const createRecordFromUpload = (
 	return {
 		document_id: file.uid || `${Date.now()}`,
 		knowledge_id: '',
-		tenant_id: '',
 		doc_name: file.name,
 		doc_type: docType,
 		location: '',
@@ -252,7 +251,6 @@ export const createRecordFromWebUrl = (
 	return {
 		document_id: item.id || `${Date.now()}`,
 		knowledge_id: '',
-		tenant_id: '',
 		doc_name: hostName,
 		doc_type: 'web',
 		location: item.url,

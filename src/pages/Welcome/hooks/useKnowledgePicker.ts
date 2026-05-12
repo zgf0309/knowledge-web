@@ -10,13 +10,11 @@ import { flattenGroups } from '../utils';
 export const KNOWLEDGE_PICKER_PAGE_SIZE = 9;
 
 interface UseKnowledgePickerParams {
-  tenantId: string;
   value?: string;
   open: boolean;
 }
 
 export const useKnowledgePicker = ({
-  tenantId,
   value,
   open,
 }: UseKnowledgePickerParams) => {
@@ -25,9 +23,9 @@ export const useKnowledgePicker = ({
   const [page, setPage] = useState(1);
 
   const groupQuery = useQuery({
-    queryKey: ['ComposerKnowledgeGroup', tenantId],
-    queryFn: () => queryKnowledgeGroup({ tenant_id: tenantId }),
-    enabled: !!tenantId && open,
+    queryKey: ['ComposerKnowledgeGroup'],
+    queryFn: () => queryKnowledgeGroup({}),
+    enabled: open,
     select: (raw: any) => {
       const list = raw?.data?.list ?? raw?.data ?? [];
       return flattenGroups(Array.isArray(list) ? list : []);
@@ -35,16 +33,15 @@ export const useKnowledgePicker = ({
   });
 
   const listQuery = useQuery({
-    queryKey: ['ComposerKnowledgeList', tenantId, groupId, keyword, page],
+    queryKey: ['ComposerKnowledgeList', groupId, keyword, page],
     queryFn: () =>
       queryKnowledgeList({
-        tenant_id: tenantId,
         group_id: groupId,
         knowledge_name: keyword || undefined,
         page_num: page,
         page_size: KNOWLEDGE_PICKER_PAGE_SIZE,
       }),
-    enabled: !!tenantId && open,
+    enabled: open,
     select: (raw: any) => ({
       list: (raw?.data?.list ??
         raw?.data?.records ??

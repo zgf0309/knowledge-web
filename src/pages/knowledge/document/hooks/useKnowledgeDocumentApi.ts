@@ -11,7 +11,6 @@ import {
 import type { KnowledgeChunkItem, KnowledgeDocMeta } from '../models';
 
 export interface DocumentApiContext {
-  tenantId: string;
   knowledgeId: string;
   documentId: string;
 }
@@ -31,7 +30,6 @@ interface ChunksResponse {
 const isOk = (res: any) => res?.code === 200;
 
 export const useKnowledgeDocumentApi = ({
-  tenantId,
   knowledgeId,
   documentId,
   pageNo,
@@ -39,15 +37,14 @@ export const useKnowledgeDocumentApi = ({
   enableMdContent = true,
 }: UseKnowledgeDocumentApiOptions) => {
   const ctx = useMemo<DocumentApiContext>(
-    () => ({ tenantId, knowledgeId, documentId }),
-    [tenantId, knowledgeId, documentId],
+    () => ({ knowledgeId, documentId }),
+    [knowledgeId, documentId],
   );
 
   const chunksQuery = useQuery({
     queryKey: ['KnowledgeDocChunks', ctx, pageNo, pageSize],
     queryFn: () =>
       queryKnowledgeDocChunks({
-        tenant_id: tenantId,
         knowledge_id: knowledgeId,
         document_id: documentId,
         page_no: pageNo,
@@ -63,7 +60,6 @@ export const useKnowledgeDocumentApi = ({
     queryKey: ['KnowledgeDocMdcontent', ctx, objectKey],
     queryFn: () =>
       queryKnowledgeDocMdcontent({
-        tenant_id: tenantId,
         object_key: objectKey,
       }),
     select: (s: any) => s?.data?.content as string | undefined,
@@ -74,7 +70,6 @@ export const useKnowledgeDocumentApi = ({
 
   const createChunk = async (content: string) => {
     const res: any = await addKnowledgeDocCustomChunk({
-      tenant_id: tenantId,
       knowledge_id: knowledgeId,
       document_id: documentId,
       content,
@@ -89,7 +84,6 @@ export const useKnowledgeDocumentApi = ({
     available = true,
   ) => {
     const res: any = await udpdateKnowledgeDocCustomChunk({
-      tenant_id: tenantId,
       knowledge_id: knowledgeId,
       document_id: documentId,
       chunk_id: chunkId,
@@ -108,7 +102,6 @@ export const useKnowledgeDocumentApi = ({
 
   const deleteChunk = async (chunkId: string) => {
     const res: any = await delKnowledgeDocChunk({
-      tenant_id: tenantId,
       knowledge_id: knowledgeId,
       document_id: documentId,
       chunk_id: chunkId,
@@ -122,7 +115,6 @@ export const useKnowledgeDocumentApi = ({
     explanation: string,
   ) => {
     const res: any = await optKnowledgeDocCustomInsight({
-      tenant_id: tenantId,
       knowledge_id: knowledgeId,
       document_id: documentId,
       chunk_id: chunkId,

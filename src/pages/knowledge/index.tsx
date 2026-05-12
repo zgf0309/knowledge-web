@@ -17,11 +17,17 @@ import type {
 import { getUniqueTags } from './utils';
 import './index.less';
 import { useQuery } from '@tanstack/react-query';
-import { useTenantId } from '@/hooks/useTenantId';
 import {
   delKnowledgeDoc,
   queryKnowledgeDocList,
 } from '@/services/knowledge/api';
+
+const PROCESSING_STATUSES = new Set([
+  'pending',
+  'running',
+  'processing',
+  'parsing',
+]);
 
 const KnowledgePage = () => {
   const navigate = useNavigate();
@@ -38,7 +44,6 @@ const KnowledgePage = () => {
   const [tagForm] = Form.useForm<TagFormValues>();
   const [messageApi, messageContextHolder] = message.useMessage();
   const [modal, modalContextHolder] = Modal.useModal();
-  const tenantId = useTenantId();
   const {
     data: knowledgeDocList,
     isLoading,
@@ -49,11 +54,9 @@ const KnowledgePage = () => {
       pagination,
       searchKeyword,
       knowledgeId,
-      tenantId,
     ],
     queryFn: () =>
       queryKnowledgeDocList({
-        tenant_id: tenantId,
         knowledge_id: knowledgeId || '',
         document_name: searchKeyword,
         status: undefined,
@@ -61,6 +64,14 @@ const KnowledgePage = () => {
         page_size: pagination.pageSize,
       }),
     select: (s: any) => s.data,
+    refetchInterval: (data) => {
+      const list = (data as any)?.list as KnowledgeFileRecord[] | undefined;
+      const hasProcessingDoc = list?.some((item) =>
+        PROCESSING_STATUSES.has(String(item.status || '').toLowerCase()),
+      );
+
+      return hasProcessingDoc ? 2000 : false;
+    },
   });
 
   const records = useMemo<KnowledgeFileRecord[]>(
@@ -155,7 +166,6 @@ const KnowledgePage = () => {
       onOk: async () => {
         const params: any = {
           doc_ids: keys || [],
-          tenant_id: tenantId,
         };
         const res: any = await delKnowledgeDoc(params);
         if (res?.code === 200) {

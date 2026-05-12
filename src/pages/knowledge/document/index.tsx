@@ -2,7 +2,6 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useLocation } from '@umijs/max';
 import { Flex, Modal, message } from 'antd';
 import { useState } from 'react';
-import { useTenantId } from '@/hooks/useTenantId';
 import type { KnowledgeFileRecord } from '../types';
 import AudioDocumentLayout from './components/AudioDocumentLayout';
 import ChunkEditorModal from './components/ChunkEditorModal';
@@ -34,7 +33,6 @@ const KnowledgeDocumentPage = () => {
     | undefined;
   const record = locationState?.record;
 
-  const tenantId = useTenantId();
   const knowledgeId = record?.knowledge_id ?? '';
   const documentId = record?.document_id ?? '';
   const isAudio = isAudioDocument(record);
@@ -46,7 +44,6 @@ const KnowledgeDocumentPage = () => {
   const [modal, modalContextHolder] = Modal.useModal();
 
   const api = useKnowledgeDocumentApi({
-    tenantId,
     knowledgeId,
     documentId,
     pageNo: pagination.current,
