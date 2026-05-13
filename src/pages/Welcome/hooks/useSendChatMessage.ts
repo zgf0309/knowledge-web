@@ -5,6 +5,11 @@ import {
   fetchEventSource,
 } from '@microsoft/fetch-event-source';
 import { buildAuthHeaders } from '@/utils/enhancedRequest';
+import {
+  extractReferences,
+  extractThinking,
+  formatReferencesAsThinking,
+} from '../utils';
 
 type SendChatMessageData = {
   content: string;
@@ -39,6 +44,10 @@ const extractStreamContent = (message: any): string => {
   }
 
   const data = message?.data ?? message;
+  if (message?.type === 'reasoning' || data?.type === 'reasoning') {
+    return '';
+  }
+
   return String(
     data?.answer ??
       data?.text ??
@@ -52,6 +61,11 @@ const extractStreamContent = (message: any): string => {
   );
 };
 
+const extractStreamReferences = (message: any): any[] | undefined => {
+  const refs = extractReferences(message);
+  return refs.length > 0 ? refs : undefined;
+};
+
 /**
  * 发送消息（SSE 流式）
  * POST /api/v1/chat/conversations/{conversation_id}/messages
@@ -62,6 +76,8 @@ export async function sendChatMessage(
   options?: SendChatMessageOptions,
 ) {
   let fullContent = '';
+  let reasoningContent = '';
+  let references: any[] | undefined;
 
   await fetchEventSource(
     `/knowledge-api/api/v1/chat/conversations/${conversationId}/messages`,
@@ -101,9 +117,19 @@ export async function sendChatMessage(
 
         const message = parseStreamPayload(event.data);
         const content = extractStreamContent(message);
+        const thinking = extractThinking(message);
 
         if (content) {
           fullContent += content;
+        }
+
+        if (thinking) {
+          reasoningContent += thinking;
+        }
+
+        const refs = extractStreamReferences(message);
+        if (refs && refs.length > 0) {
+          references = refs;
         }
 
         options?.onMessage?.(message, event);
@@ -115,5 +141,9 @@ export async function sendChatMessage(
     },
   );
 
-  return fullContent;
+  return {
+    content: fullContent,
+    references,
+    thinking: reasoningContent || formatReferencesAsThinking(references),
+  };
 }

@@ -8,6 +8,9 @@ import type { ChatMessageItem } from '../types';
 import {
   createLocalMessage,
   extractAssistantReply,
+  extractReferences,
+  extractThinking,
+  formatReferencesAsThinking,
   normalizeMessages,
 } from '../utils';
 import { sendChatMessage } from './useSendChatMessage';
@@ -95,6 +98,21 @@ export const useChatSession = () => {
     [],
   );
 
+  const patchAssistantMessage = useCallback(
+    (assistantId: string, patch: Partial<ChatMessageItem>) => {
+      const nextPatch = Object.fromEntries(
+        Object.entries(patch).filter(([, value]) => value !== undefined),
+      );
+
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === assistantId ? { ...item, ...nextPatch } : item,
+        ),
+      );
+    },
+    [],
+  );
+
   const submitQuestion = useCallback(
     async (input: SubmitQuestionInput): Promise<string> => {
       const content = input.content.trim();
@@ -109,6 +127,7 @@ export const useChatSession = () => {
 
       const assistantId = `assistant-${Date.now()}`;
       let assistantContent = '';
+      let reasoningContent = '';
       setMessages((prev) => [
         ...prev,
         {
@@ -130,17 +149,63 @@ export const useChatSession = () => {
           {
             onMessage: (message) => {
               const chunkContent = extractAssistantReply(message);
-              if (!chunkContent) return;
+              const refs = extractReferences(message);
+              const thinking = extractThinking(message);
 
-              assistantContent += chunkContent;
-              appendAssistantChunk(assistantId, assistantContent);
+              if (chunkContent) {
+                assistantContent += chunkContent;
+              }
+
+              if (thinking) {
+                reasoningContent += thinking;
+              }
+
+              if (refs.length > 0 && !reasoningContent) {
+                reasoningContent = '' // formatReferencesAsThinking(refs);
+              }
+
+              if (chunkContent || refs.length > 0 || thinking) {
+                patchAssistantMessage(assistantId, {
+                  content: assistantContent,
+                  references: refs.length > 0 ? refs : undefined,
+                  thinking: reasoningContent || undefined,
+                });
+              }
             },
           },
         );
 
+        const replyContent =
+          typeof reply === 'string' ? reply : (reply?.content ?? '');
+        const replyReferences =
+          typeof reply === 'object' && reply?.references
+            ? reply.references
+            : undefined;
+        const replyThinking =
+          typeof reply === 'object' && reply?.thinking ? reply.thinking : '';
+
         if (!assistantContent) {
-          assistantContent = extractAssistantReply(reply) || '（无回复内容）';
+          assistantContent =
+            replyContent || extractAssistantReply(reply) || '（无回复内容）';
           appendAssistantChunk(assistantId, assistantContent);
+        }
+
+        if (replyReferences && replyReferences.length > 0) {
+          setMessages((prev) =>
+            prev.map((item) =>
+              item.id === assistantId
+                ? {
+                    ...item,
+                    references: replyReferences,
+                    thinking:
+                      item.thinking ||
+                      replyThinking ||
+                      // formatReferencesAsThinking(replyReferences) ||
+                      undefined,
+                  }
+                : item,
+            ),
+          );
         }
       } catch (error) {
         setMessages((prev) => prev.filter((item) => item.id !== assistantId));
@@ -151,7 +216,7 @@ export const useChatSession = () => {
 
       return cid;
     },
-    [appendAssistantChunk, ensureConversation],
+    [appendAssistantChunk, ensureConversation, patchAssistantMessage],
   );
 
   return {

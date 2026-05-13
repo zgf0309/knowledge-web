@@ -6,11 +6,24 @@ export interface ConversationItem {
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 
+export interface ReferenceItem {
+  id: string;
+  title: string;
+  snippet?: string;
+  content?: string;
+  knowledge_name?: string;
+  score?: number;
+  source?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface ChatMessageItem {
   id: string;
   role: ChatRole;
   content: string;
   createdAt?: number;
+  references?: ReferenceItem[];
+  thinking?: string;
 }
 
 export interface KnowledgeItem {

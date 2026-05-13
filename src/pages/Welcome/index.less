@@ -440,11 +440,13 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 28px;
+    gap: 26px;
     width: 100%;
+    max-width: 860px;
     max-height: calc(100vh - 280px);
-    padding: 0 0 24px;
+    padding: 0 0 28px;
     overflow-y: auto;
+    scroll-behavior: smooth;
   }
 
   &__message {
@@ -463,6 +465,38 @@
     }
   }
 
+  &__message-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    .welcome-page__message--user & {
+      align-items: flex-end;
+      width: auto;
+      max-width: 620px;
+    }
+  }
+
+  &__message-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    height: 28px;
+    margin-top: 6px;
+
+    .ant-btn {
+      width: 24px;
+      height: 24px;
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 14px;
+
+      &:hover {
+        color: #5566ff;
+        background: transparent;
+      }
+    }
+  }
+
   &__message-bubble {
     width: 100%;
     max-width: 100%;
@@ -478,11 +512,11 @@
     .welcome-page__message--user & {
       width: auto;
       max-width: 560px;
-      padding: 10px 16px;
-      color: #fff;
+      padding: 9px 18px;
+      color: rgba(0, 0, 0, 0.88);
       line-height: 1.6;
-      background: linear-gradient(135deg, #6c5ce7 0%, #a78bfa 100%);
-      border-radius: 12px;
+      background: #eef4ff;
+      border-radius: 20px;
     }
 
     &--pending {
@@ -493,8 +527,100 @@
     }
   }
 
+  &__recall {
+    margin-bottom: 8px;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  &__recall-title {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    color: rgba(0, 0, 0, 0.52);
+    font-size: 15px;
+  }
+
+  &__recall-title-icon {
+    color: #5566ff;
+    font-size: 14px;
+  }
+
+  &__recall-duration,
+  &__recall-arrow {
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  &__recall-arrow {
+    font-size: 10px;
+  }
+
+  &__recall-body {
+    margin-left: 8px;
+    padding-left: 16px;
+    border-left: 1px solid #e5e7eb;
+  }
+
+  &__recall-thinking {
+    margin: 0 0 12px;
+    white-space: pre-wrap;
+  }
+
+  &__recall-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  &__recall-bullet {
+    flex-shrink: 0;
+    width: 4px;
+    height: 4px;
+    margin-top: 11px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+  }
+
+  &__recall-content {
+    min-width: 0;
+  }
+
+  &__recall-item-title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 2px;
+    color: rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+  }
+
+  &__recall-source {
+    max-width: 180px;
+    overflow: hidden;
+    color: rgba(0, 0, 0, 0.35);
+    font-weight: 400;
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__recall-snippet {
+    display: -webkit-box;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
   &__markdown {
     width: 100%;
+    color: rgba(0, 0, 0, 0.88);
+    font-size: 16px;
+    line-height: 1.85;
 
     > :first-child {
       margin-top: 0;
@@ -505,7 +631,7 @@
     }
 
     p {
-      margin: 0 0 12px;
+      margin: 0 0 18px;
     }
 
     h1,
@@ -514,7 +640,7 @@
     h4,
     h5,
     h6 {
-      margin: 18px 0 10px;
+      margin: 26px 0 14px;
       color: rgba(0, 0, 0, 0.9);
       font-weight: 600;
       line-height: 1.45;
@@ -525,11 +651,11 @@
     }
 
     h2 {
-      font-size: 20px;
+      font-size: 21px;
     }
 
     h3 {
-      font-size: 18px;
+      font-size: 19px;
     }
 
     h4 {
@@ -538,7 +664,7 @@
 
     ul,
     ol {
-      margin: 0 0 12px;
+      margin: 0 0 18px;
       padding-left: 24px;
     }
 
@@ -558,10 +684,10 @@
     }
 
     pre {
-      margin: 12px 0;
-      padding: 12px 14px;
+      margin: 14px 0 24px;
+      padding: 14px 16px;
       overflow-x: auto;
-      background: rgba(0, 0, 0, 0.04);
+      background: #f8f9fb;
       border-radius: 8px;
 
       code {
