@@ -128,7 +128,6 @@
     gap: 28px;
     align-items: center;
     width: 100%;
-    max-width: 720px;
 
     &--conversation {
       justify-content: space-between;
@@ -215,6 +214,9 @@
 
   &__composer-card {
     position: relative;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
     padding: 12px 14px 10px;
     background: #fff;
     border: 1px solid #e5e7f0;
@@ -438,15 +440,23 @@
   // ---------- 消息列表 ----------
   &__messages {
     display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 26px;
     width: 100%;
-    max-width: 860px;
     max-height: calc(100vh - 280px);
     padding: 0 0 28px;
     overflow-y: auto;
     scroll-behavior: smooth;
+  }
+
+  &__messages-box {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 26px;
+    width: 100%;
+    max-width: 720px;
+    max-height: calc(100vh - 280px);
+    margin: 0 auto;
+    padding: 0 0 28px;
   }
 
   &__message {
@@ -559,12 +569,19 @@
 
   &__recall-body {
     margin-left: 8px;
-    padding-left: 16px;
+    background: #f8f8f8;
     border-left: 1px solid #e5e7eb;
+    border-radius: 0 8px 8px 0;
   }
 
   &__recall-thinking {
+    max-height: 300px;
     margin: 0 0 12px;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  &__markdown-plain {
     white-space: pre-wrap;
   }
 

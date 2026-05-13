@@ -8,10 +8,9 @@ import type { ChatMessageItem } from '../types';
 import {
   createLocalMessage,
   extractAssistantReply,
-  extractReferences,
   extractThinking,
-  formatReferencesAsThinking,
   normalizeMessages,
+  normalizeThinkingTime,
 } from '../utils';
 import { sendChatMessage } from './useSendChatMessage';
 
@@ -149,8 +148,17 @@ export const useChatSession = () => {
           {
             onMessage: (message) => {
               const chunkContent = extractAssistantReply(message);
-              const refs = extractReferences(message);
               const thinking = extractThinking(message);
+              const eventName = message?.data?.event ?? message?.event;
+              const thinkingTime = normalizeThinkingTime(message);
+              const thinkingStatus =
+                eventName === 'THINKING_END'
+                  ? 'done'
+                  : eventName === 'THINKING_START' ||
+                      eventName === 'THINKING_CONTENT'
+                    ? 'thinking'
+                    : undefined;
+              const shouldPatchThinkingTime = thinkingTime !== undefined;
 
               if (chunkContent) {
                 assistantContent += chunkContent;
@@ -159,28 +167,22 @@ export const useChatSession = () => {
               if (thinking) {
                 reasoningContent += thinking;
               }
-
-              if (refs.length > 0 && !reasoningContent) {
-                reasoningContent = '' // formatReferencesAsThinking(refs);
-              }
-
-              if (chunkContent || refs.length > 0 || thinking) {
+              if (chunkContent || thinking || shouldPatchThinkingTime) {
                 patchAssistantMessage(assistantId, {
                   content: assistantContent,
-                  references: refs.length > 0 ? refs : undefined,
                   thinking: reasoningContent || undefined,
+                  thinkingTime,
+                  thinkingStatus,
                 });
               }
             },
           },
         );
 
+        console.log('reply', reply);
+
         const replyContent =
           typeof reply === 'string' ? reply : (reply?.content ?? '');
-        const replyReferences =
-          typeof reply === 'object' && reply?.references
-            ? reply.references
-            : undefined;
         const replyThinking =
           typeof reply === 'object' && reply?.thinking ? reply.thinking : '';
 
@@ -189,24 +191,20 @@ export const useChatSession = () => {
             replyContent || extractAssistantReply(reply) || '（无回复内容）';
           appendAssistantChunk(assistantId, assistantContent);
         }
-
-        if (replyReferences && replyReferences.length > 0) {
-          setMessages((prev) =>
-            prev.map((item) =>
-              item.id === assistantId
-                ? {
-                    ...item,
-                    references: replyReferences,
-                    thinking:
-                      item.thinking ||
-                      replyThinking ||
-                      // formatReferencesAsThinking(replyReferences) ||
-                      undefined,
-                  }
-                : item,
-            ),
-          );
-        }
+        setMessages((prev) =>
+          prev.map((item) =>
+            item.id === assistantId
+              ? {
+                  ...item,
+                  thinking: item.thinking || replyThinking || undefined,
+                  thinkingStatus:
+                    item.thinkingStatus === 'thinking'
+                      ? 'done'
+                      : item.thinkingStatus,
+                }
+              : item,
+          ),
+        );
       } catch (error) {
         setMessages((prev) => prev.filter((item) => item.id !== assistantId));
         throw error;

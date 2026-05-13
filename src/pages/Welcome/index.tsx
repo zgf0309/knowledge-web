@@ -45,17 +45,17 @@ const KnowledgeWelcomePage = () => {
 
     try {
       const isNewConversation = !conversationId;
+      setQuestion('');
       const nextConversationId = await submitQuestion({
         content,
         kbId: knowledgeId,
       });
 
-      setQuestion('');
-
       if (isNewConversation) {
         createConversation(content.slice(0, 20), nextConversationId);
       }
     } catch (err: any) {
+      setQuestion(content);
       messageApi.error(err?.message ?? '提交失败，请稍后重试');
     }
   }, [

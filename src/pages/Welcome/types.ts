@@ -22,8 +22,9 @@ export interface ChatMessageItem {
   role: ChatRole;
   content: string;
   createdAt?: number;
-  references?: ReferenceItem[];
   thinking?: string;
+  thinkingTime?: number;
+  thinkingStatus?: 'thinking' | 'done';
 }
 
 export interface KnowledgeItem {
